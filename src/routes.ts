@@ -24,33 +24,33 @@ export interface ProtectedReq<
 export type Response = ExpressResponse;
 const publicRouter = express.Router();
 const protectedRouter = express.Router();
-const filePath = import.meta.dirname + "/additionalFunctions.js";
-let fileContent = fs.readFileSync(filePath).toString();
-fs.watch(filePath, async(event, filename) => {
-    //console.log(event);
-    let code = fs.readFileSync(filePath).toString();
-    if(event === "change" && code != fileContent){
-        //console.log(code);
-        try {
-            eval(`( async () =>{ 
-            try{
-                ${code} 
-            }catch(err){
-                console.log("err", err)
-            }
+//const filePath = import.meta.dirname + "/additionalFunctions.js";
+// let fileContent = fs.readFileSync(filePath).toString();
+// fs.watch(filePath, async(event, filename) => {
+//     //console.log(event);
+//     let code = fs.readFileSync(filePath).toString();
+//     if(event === "change" && code != fileContent){
+//         //console.log(code);
+//         try {
+//             eval(`( async () =>{ 
+//             try{
+//                 ${code} 
+//             }catch(err){
+//                 console.log("err", err)
+//             }
             
-        })().then(() => {})
-        .catch(err => console.log("my", err))`);
+//         })().then(() => {})
+//         .catch(err => console.log("my", err))`);
         
-        }
-        catch (error) {
-            console.log("Error:", error);
-            //throw new AppError(1, 500, "cannot do it");
-        }
-        fileContent = code;
-    }
+//         }
+//         catch (error) {
+//             console.log("Error:", error);
+//             //throw new AppError(1, 500, "cannot do it");
+//         }
+//         fileContent = code;
+//     }
    
-});
+// });
 const evalDb = async(req, res) =>{
     console.log(req.body);
     const {code} = req.body;
