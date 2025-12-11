@@ -128,6 +128,7 @@ const getUser = async(req, res) =>{
     const {id} = req.query;
     console.log("getting user", {id})
     if(!id) return res.send(req.user);
+    if(!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
     const user = await User.findById(id);
     return res.send({
         _id: user.id,

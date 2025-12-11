@@ -116,7 +116,9 @@ const verifyUser = async(id, token) =>{
 const deleteUser = async(id: string) =>{
     const deletedUser: TUser = await User.findByIdAndDelete(id);
     const deletedDays = await Day.deleteMany({userId: id});
+    if(!deletedUser ) throw new AppError(1, 401, "No User to delete found");
     const friendOids = deletedUser.friends.map(friendId => new ObjectId(friendId));
+    
     const deletedFriends = await User.updateMany({_id: {$in: friendOids}}, { $pull: {
             friends: deletedUser.id
         }})

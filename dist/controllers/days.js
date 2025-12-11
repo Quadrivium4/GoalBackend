@@ -285,6 +285,7 @@ var getDays = function(req, res) {
                     _state.label = 2;
                 case 2:
                     if (!user) user = req.user;
+                    console.log("getting days:", user);
                     //console.log({timestamp}, req.query)
                     date = new Date(timestamp);
                     date.setHours(0, 0, 0, 0);
@@ -335,14 +336,11 @@ var getStats = function(req, res) {
                     ];
                 case 1:
                     user = _state.sent();
-                    return [
-                        3,
-                        3
-                    ];
+                    _state.label = 2;
                 case 2:
-                    user = req.user;
-                    _state.label = 3;
-                case 3:
+                    if (!user) {
+                        user = req.user;
+                    }
                     promises = [];
                     user.goals.map(function(goal) {
                         var promise = function() {
@@ -383,7 +381,7 @@ var getStats = function(req, res) {
                         4,
                         Promise.all(promises)
                     ];
-                case 4:
+                case 3:
                     result = _state.sent();
                     return [
                         2,

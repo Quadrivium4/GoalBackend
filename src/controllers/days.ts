@@ -88,11 +88,13 @@ export const aggregateDays = (date: number, userId: string | ObjectId):mongoose.
   },
 ]
 const getDays = async(req: ProtectedReq, res) =>{
+  
     let user: TUser;
     let timestamp: number;
     if(typeof req.query.timestamp == 'string' ) timestamp = parseInt(req.query.timestamp, 10);
     if(req.query.id) user = await User.findById(req.query.id);
     if(!user) user = req.user;
+    console.log("getting days:", user)
     //console.log({timestamp}, req.query)
     const date = new Date(timestamp);
     date.setHours(0,0,0,0);
@@ -114,7 +116,10 @@ const getStats = async(req: ProtectedReq, res: Response) =>{
     console.log(req.params)
     let user: TUser;
     if(userId) user = await User.findById(userId);
-    else user = req.user;
+    if(!user ) {
+      user = req.user
+    }
+  
 
     const promises = [];
     user.goals.map(goal =>{

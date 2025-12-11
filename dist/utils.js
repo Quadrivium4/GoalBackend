@@ -203,6 +203,7 @@ var createTokens = function(id, email) {
 function extractBearerToken(req) {
     if (!req.headers.authorization) return false;
     if (!req.headers.authorization.startsWith("Bearer ")) return false;
+    //console.log("extracting bearer", req.headers.authorization);
     var token = req.headers.authorization.split(" ")[1];
     return token;
 }

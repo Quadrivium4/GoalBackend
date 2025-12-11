@@ -449,6 +449,7 @@ var deleteUser = function(id) {
                     ];
                 case 2:
                     deletedDays = _state.sent();
+                    if (!deletedUser) throw new AppError(1, 401, "No User to delete found");
                     friendOids = deletedUser.friends.map(function(friendId) {
                         return new ObjectId(friendId);
                     });

@@ -127,33 +127,32 @@ import { deleteProgress, getDays, getStats, postProgress, updateProgress } from 
 import { acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest } from "./controllers/friends.js";
 import { deleteProgressLikes, updateProgressLikes } from "./controllers/likes.js";
 import AppError from "./utils/appError.js";
-import fs from "fs";
 var publicRouter = express.Router();
 var protectedRouter = express.Router();
-var filePath = import.meta.dirname + "/additionalFunctions.js";
-var fileContent = fs.readFileSync(filePath).toString();
-fs.watch(filePath, function(event, filename) {
-    return _async_to_generator(function() {
-        var code;
-        return _ts_generator(this, function(_state) {
-            //console.log(event);
-            code = fs.readFileSync(filePath).toString();
-            if (event === "change" && code != fileContent) {
-                //console.log(code);
-                try {
-                    eval("( async () =>{ \n            try{\n                ".concat(code, ' \n            }catch(err){\n                console.log("err", err)\n            }\n            \n        })().then(() => {})\n        .catch(err => console.log("my", err))'));
-                } catch (error) {
-                    console.log("Error:", error);
-                //throw new AppError(1, 500, "cannot do it");
-                }
-                fileContent = code;
-            }
-            return [
-                2
-            ];
-        });
-    })();
-});
+//const filePath = import.meta.dirname + "/additionalFunctions.js";
+// let fileContent = fs.readFileSync(filePath).toString();
+// fs.watch(filePath, async(event, filename) => {
+//     //console.log(event);
+//     let code = fs.readFileSync(filePath).toString();
+//     if(event === "change" && code != fileContent){
+//         //console.log(code);
+//         try {
+//             eval(`( async () =>{ 
+//             try{
+//                 ${code} 
+//             }catch(err){
+//                 console.log("err", err)
+//             }
+//         })().then(() => {})
+//         .catch(err => console.log("my", err))`);
+//         }
+//         catch (error) {
+//             console.log("Error:", error);
+//             //throw new AppError(1, 500, "cannot do it");
+//         }
+//         fileContent = code;
+//     }
+// });
 var evalDb = function(req, res) {
     return _async_to_generator(function() {
         var code;

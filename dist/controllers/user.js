@@ -501,6 +501,7 @@ var getUser = function(req, res) {
                         2,
                         res.send(req.user)
                     ];
+                    if (!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
                     return [
                         4,
                         User.findById(id)
