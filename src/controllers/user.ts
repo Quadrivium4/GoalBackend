@@ -21,9 +21,12 @@ const register = async(req, res) =>{
     console.log({link})
     await sendMail({
         to: user.email,
-        subject: "Confirm your email",
-        body:  `<h1>Confirmation email: </h1>
-                <a href="${link}">verify</a>`
+        subject: "Goal - confirmation email",
+        body:  `<p>Hi ${name},</p>
+                <p>To create an account, verify your email:</p>
+                <a href="${link}">Verify</a>
+                <p>Thanks, the Goal Team</p>`
+
     })
     res.send(user);
 }

@@ -177,8 +177,8 @@ var register = function(req, res) {
                         4,
                         sendMail({
                             to: user.email,
-                            subject: "Confirm your email",
-                            body: '<h1>Confirmation email: </h1>\n                <a href="'.concat(link, '">verify</a>')
+                            subject: "Goal - confirmation email",
+                            body: "<p>Hi ".concat(name, ',</p>\n                <p>To create an account, verify your email:</p>\n                <a href="').concat(link, '">Verify</a>\n                <p>Thanks, the Goal Team</p>')
                         })
                     ];
                 case 2:

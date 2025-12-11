@@ -129,32 +129,39 @@ oAuth2Client.setCredentials({
 var sendMail = function(param) {
     var to = param.to, subject = param.subject, body = param.body, _param_attachments = param.attachments, attachments = _param_attachments === void 0 ? [] : _param_attachments;
     return _async_to_generator(function() {
-        var accessToken, transporter, mailOptions, result;
+        var transporter, mailOptions, result;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    return [
-                        4,
-                        oAuth2Client.getAccessToken()
-                    ];
-                case 1:
-                    accessToken = _state.sent();
+                    // console.log(process.env.GMAIL_CLIENT_ID,
+                    //     process.env.GMAIL_CLIENT_SECRET,
+                    //     process.env.GMAIL_REDIRECT_URI)
+                    // const accessToken = await oAuth2Client.getAccessToken()
+                    // const transporter = nodemailer.createTransport({
+                    //     service: 'gmail',
+                    //     auth: {
+                    //         type: "OAuth2",
+                    //         user: process.env.MY_EMAIL,
+                    //         clientId: process.env.GMAIL_CLIENT_ID,
+                    //         clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                    //         refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+                    //         accessToken: accessToken
+                    //     },
+                    //     tls: {
+                    //         rejectUnauthorized: false
+                    //     }
+                    // });
                     transporter = nodemailer.createTransport({
-                        service: 'gmail',
+                        host: 'authsmtp.securemail.pro',
+                        port: 587,
+                        secure: false,
                         auth: {
-                            type: "OAuth2",
-                            user: process.env.MY_EMAIL,
-                            clientId: process.env.GMAIL_CLIENT_ID,
-                            clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                            refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                            accessToken: accessToken
-                        },
-                        tls: {
-                            rejectUnauthorized: false
+                            user: 'support@goalapp.it',
+                            pass: process.env.MAIL_PSW // your password
                         }
                     });
                     mailOptions = {
-                        from: process.env.MY_EMAIL,
+                        from: 'support@goalapp.it',
                         to: to,
                         subject: subject,
                         html: body,
@@ -162,9 +169,15 @@ var sendMail = function(param) {
                     };
                     return [
                         4,
-                        transporter.sendMail(mailOptions)
+                        transporter.sendMail(mailOptions, function(error, info) {
+                            if (error) {
+                                console.log(error);
+                            } else {
+                                console.log('Email sent: ' + info.response);
+                            }
+                        })
                     ];
-                case 2:
+                case 1:
                     result = _state.sent();
                     return [
                         2,
