@@ -21,6 +21,8 @@ export interface TNotification {
     }
     status: "read" | "unread"
 }
+export type TProfileType = "public" | "private";
+
 const NotificationSchema = new mongoose.Schema({
     date: {
         type: Number
@@ -87,7 +89,9 @@ export interface TUser extends mongoose.Document  {
     followers: string[],
     following: string[],
     deletionToken?: string,
-    notifications: TNotification[]
+    notifications: TNotification[],
+    profileType: TProfileType,
+    pro: boolean
 }
 const UserSchema = new mongoose.Schema({
     name: {
@@ -126,7 +130,13 @@ const UserSchema = new mongoose.Schema({
     },
     notifications: [NotificationSchema],
     followers: [],
-    following: []
+    following: [],
+    profileType: {
+        type: String
+    },
+    pro: {
+        type: Boolean
+    }
 });
 
 const User = mongoose.model<TUser>("User", UserSchema);

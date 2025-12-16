@@ -354,8 +354,8 @@ var resetPassword = function(req, res) {
                         4,
                         sendMail({
                             to: user.email,
-                            subject: "Confirm your email",
-                            body: '<h1>Confirmation email: </h1>\n                <a href="'.concat(link, '">verify</a>')
+                            subject: "Goal - Reset password",
+                            body: "<p>Hi ".concat(user.name, ', </p>\n                <p>We received a request to reset your Goal account password.</p>\n                <p>Click the link below to confirm:</p>\n                <a href="').concat(link, '">Reset Password</a>\n            \n                ')
                         })
                     ];
                 case 3:
@@ -487,7 +487,7 @@ var profileImgUpload = function(req, res) {
         });
     })();
 };
-var getUser = function(req, res) {
+var getProfile = function(req, res) {
     return _async_to_generator(function() {
         var id, user;
         return _ts_generator(this, function(_state) {
@@ -497,7 +497,7 @@ var getUser = function(req, res) {
                     console.log("getting user", {
                         id: id
                     });
-                    if (!id) return [
+                    if (!id || id == req.user.id.toString()) return [
                         2,
                         res.send(req.user)
                     ];
@@ -513,10 +513,42 @@ var getUser = function(req, res) {
                         res.send({
                             _id: user.id,
                             name: user.name,
-                            email: user.email,
+                            profileImg: user.profileImg
+                        })
+                    ];
+            }
+        });
+    })();
+};
+var getUser = function(req, res) {
+    return _async_to_generator(function() {
+        var id, user;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    id = req.query.id;
+                    console.log("getting user", {
+                        id: id
+                    });
+                    if (!id || id == req.user.id.toString()) return [
+                        2,
+                        res.send(req.user)
+                    ];
+                    if (!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
+                    return [
+                        4,
+                        User.findById(id)
+                    ];
+                case 1:
+                    user = _state.sent();
+                    return [
+                        2,
+                        res.send({
+                            _id: user.id,
+                            name: user.name,
                             profileImg: user.profileImg,
-                            bio: user.bio,
-                            goals: user.goals
+                            goals: user.goals,
+                            profileType: user.profileType
                         })
                     ];
             }
@@ -568,16 +600,17 @@ var changeEmail = function(req, res) {
 };
 var editUser = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, name, bio, newUser;
+        var _req_body, name, bio, profileType, newUser;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _req_body = req.body, name = _req_body.name, bio = _req_body.bio;
+                    _req_body = req.body, name = _req_body.name, bio = _req_body.bio, profileType = _req_body.profileType;
                     return [
                         4,
                         User.findByIdAndUpdate(req.user.id, {
                             name: name,
-                            bio: bio
+                            bio: bio,
+                            profileType: profileType
                         }, {
                             new: true
                         })
@@ -599,7 +632,7 @@ var arrayToOids = function(array) {
 };
 var getUsers = function(req, res) {
     return _async_to_generator(function() {
-        var _req_query, search, index, offset, flt, filter, users;
+        var _req_query, search, index, offset, flt, filter, projection, users;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -627,9 +660,35 @@ var getUsers = function(req, res) {
                         };
                     }
                     console.log(filter);
+                    projection = {
+                        name: 1,
+                        profileImg: 1,
+                        visible: {
+                            "$cond": [
+                                {
+                                    $or: [
+                                        {
+                                            $in: [
+                                                req.user.id.toString(),
+                                                "$followers"
+                                            ]
+                                        },
+                                        {
+                                            $eq: [
+                                                "$profileType",
+                                                "public"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                true,
+                                false
+                            ]
+                        }
+                    };
                     return [
                         4,
-                        User.find(filter).skip(index * offset).limit(offset)
+                        User.find(filter, projection).skip(index * offset).limit(offset)
                     ];
                 case 1:
                     users = _state.sent();
@@ -813,4 +872,4 @@ var logout = function(req, res) {
         });
     })();
 };
-export { register, resetPassword, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, googleLogin, changeEmail, editUser, getNotifications, readNotifications };
+export { register, resetPassword, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile };

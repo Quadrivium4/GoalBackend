@@ -1,6 +1,6 @@
 import express, {Request, Response as ExpressResponse} from "express"
 import { tryCatch } from "./utils.js";
-import { changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
 import { deleteProgress, getDays, getStats, postProgress, updateProgress } from "./controllers/days.js";
@@ -74,7 +74,8 @@ publicRouter.post("/delete-account", tryCatch(deleteAccount))
 
 
 protectedRouter.use(tryCatch(verifyToken))
-
+protectedRouter
+    .get("/profile", tryCatch(getProfile))
 protectedRouter
     .get("/user", tryCatch(getUser))
     .put("/user", tryCatch(editUser))

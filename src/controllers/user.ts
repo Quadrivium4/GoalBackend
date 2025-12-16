@@ -9,7 +9,7 @@ import crypto from "crypto";
 import { isValidObjectId } from "mongoose";
 import { deleteOldNotifications } from "../functions/friends.js";
 import { ProtectedReq } from "../routes.js";
-import { ObjectId } from "mongodb";
+import { BSON, BSONType, ObjectId } from "mongodb";
 
 export const GOOGLE_LOGIN = "google-login"
 const client = new OAuth2Client();
@@ -84,9 +84,13 @@ const resetPassword = async(req, res) =>{
     console.log({link})
     let result = await sendMail({
         to: user.email,
-        subject: "Confirm your email",
-        body:  `<h1>Confirmation email: </h1>
-                <a href="${link}">verify</a>`
+        subject: "Goal - Reset password",
+        body:  `<p>Hi ${user.name}, </p>
+                <p>We received a request to reset your Goal account password.</p>
+                <p>Click the link below to confirm:</p>
+                <a href="${link}">Reset Password</a>
+            
+                `
     })
     console.log(result);
     res.send({user, result});
@@ -127,19 +131,32 @@ const profileImgUpload = async(req, res) =>{
     res.send(fileId)
 }
 
-const getUser = async(req, res) =>{
+const getProfile = async(req, res) =>{
     const {id} = req.query;
     console.log("getting user", {id})
-    if(!id) return res.send(req.user);
+    if(!id || id == req.user.id.toString()) return res.send(req.user);
     if(!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
     const user = await User.findById(id);
+   
     return res.send({
         _id: user.id,
         name: user.name,
-        email: user.email,
+        profileImg: user.profileImg
+    })
+}
+const getUser = async(req: ProtectedReq, res) =>{
+    const {id} = req.query;
+    console.log("getting user", {id})
+    if(!id || id == req.user.id.toString()) return res.send(req.user);
+    if(!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
+    const user = await User.findById(id);
+   
+    return res.send({
+        _id: user.id,
+        name: user.name,
         profileImg: user.profileImg,
-        bio: user.bio,
-        goals: user.goals
+        goals: user.goals,
+        profileType: user.profileType
     })
 }
 const changeEmail = async(req, res) =>{
@@ -156,15 +173,15 @@ const changeEmail = async(req, res) =>{
     return res.send(newUser)
 }
 const editUser = async(req, res) =>{
-    const { name,  bio} = req.body;
-    const newUser = await User.findByIdAndUpdate(req.user.id, {name, bio}, {new: true})
+    const { name,  bio, profileType} = req.body;
+    const newUser = await User.findByIdAndUpdate(req.user.id, {name, bio, profileType}, {new: true})
     return res.send(newUser)
 }
 const arrayToOids =  (array: string[]) =>{
     return array.map(str => new ObjectId(str))
 }
-const getUsers = async(req, res) =>{
-    let {search, index, offset, filter: flt} = req.query;
+const getUsers = async(req: ProtectedReq, res) =>{
+    let {search, index, offset, filter: flt} = req.query as any;
     if(!index) index = 0;
     if(!offset) offset = 20;
     console.log("get users query: ", req.query);
@@ -183,7 +200,27 @@ const getUsers = async(req, res) =>{
         
     }
     console.log(filter)
-    const users = await User.find(filter).skip(index * offset).limit(offset);
+    let projection = {
+        name: 1,
+        profileImg: 1,
+        visible: {
+            "$cond":[
+                {
+                    $or: [
+                        {$in: [ req.user.id.toString(), "$followers"]},
+                        {$eq: ["$profileType", "public"]},
+
+                    ]
+                    
+                },
+                 true,
+                 false
+            ]
+            
+
+    }
+}
+    const users = await User.find(filter, projection).skip(index * offset).limit(offset);
     return res.send(users)
 }
 const updateUser = async(req, res) =>{
@@ -273,5 +310,6 @@ export {
     changeEmail,
     editUser,
     getNotifications,
-    readNotifications
+    readNotifications,
+    getProfile
 }

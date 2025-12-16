@@ -58,7 +58,13 @@ var UserSchema = new mongoose.Schema({
         NotificationSchema
     ],
     followers: [],
-    following: []
+    following: [],
+    profileType: {
+        type: String
+    },
+    pro: {
+        type: Boolean
+    }
 });
 var User = mongoose.model("User", UserSchema);
 export default User;

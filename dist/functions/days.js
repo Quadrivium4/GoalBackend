@@ -1,3 +1,14 @@
+import { getLastMonday } from "../controllers/days.js";
+import Day from "../models/day.js";
+var queryGoalDays = function(goal, userId) {
+    var fromDate = goal.frequency == "daily" ? new Date() : getLastMonday(new Date());
+    var query = goal.frequency == "daily" ? queryDate(fromDate.getTime()) : queryWeek(fromDate.getTime());
+    var days = Day.find({
+        userId: userId,
+        query: query
+    });
+    return days;
+};
 var queryDate = function(date) {
     var date1 = new Date(date);
     var date2 = new Date(date1);
@@ -36,4 +47,4 @@ var queryWeek = function(date) {
         ]
     };
 };
-export { queryDate, queryWeek };
+export { queryDate, queryWeek, queryGoalDays };

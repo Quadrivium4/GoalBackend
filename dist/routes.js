@@ -120,7 +120,7 @@ function _ts_generator(thisArg, body) {
 }
 import express from "express";
 import { tryCatch } from "./utils.js";
-import { changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
 import { deleteProgress, getDays, getStats, postProgress, updateProgress } from "./controllers/days.js";
@@ -186,6 +186,7 @@ publicRouter.post("/verify-reset-password", tryCatch(verifyResetPassword));
 publicRouter.post("/google-login", tryCatch(googleLogin));
 publicRouter.post("/delete-account", tryCatch(deleteAccount));
 protectedRouter.use(tryCatch(verifyToken));
+protectedRouter.get("/profile", tryCatch(getProfile));
 protectedRouter.get("/user", tryCatch(getUser)).put("/user", tryCatch(editUser)).delete("/user", tryCatch(deleteAccountRequest)).get("/users", tryCatch(getUsers)).get("/logout", tryCatch(logout)).post("/change-email", tryCatch(changeEmail));
 protectedRouter.post("/goals", tryCatch(postGoal)).put("/goals", tryCatch(putGoal)).delete("/goals", tryCatch(deleteGoal)).put("/goal-amount", tryCatch(putGoalAmount));
 protectedRouter.post("/progress", tryCatch(postProgress)).put("/progress", tryCatch(updateProgress)).delete("/progress", tryCatch(deleteProgress));

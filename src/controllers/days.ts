@@ -5,9 +5,10 @@ import User, { TUser } from "../models/user.js";
 import {  Response } from "../routes.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import { ObjectId } from "mongodb";
-import { queryDate } from "../functions/days.js";
+import { queryDate, queryGoalDays } from "../functions/days.js";
 import { ProtectedReq } from "../routes.js";
 import { queryDayDate } from "./goals.js";
+import AppError from "../utils/appError.js";
 export const getLastSunday = (date: number | Date) =>{
   date = new Date(date);
   date.setDate(date.getDate() - date.getDay());
@@ -94,6 +95,9 @@ const getDays = async(req: ProtectedReq, res) =>{
     if(typeof req.query.timestamp == 'string' ) timestamp = parseInt(req.query.timestamp, 10);
     if(req.query.id) user = await User.findById(req.query.id);
     if(!user) user = req.user;
+    if(user.id != req.user.id && user.profileType != "public" && !user.followers.includes(req.user.id.toString())){
+      throw new AppError(1, 401, "This profile is private, you cannot get information");
+    }
     console.log("getting days:", user)
     //console.log({timestamp}, req.query)
     const date = new Date(timestamp);
@@ -153,6 +157,8 @@ const postProgress = async(req: ProtectedReq, res: Response) =>{
         $push: {history: historyEvent}
     },{new: true})
     console.log({day, totalProgress})
+    //let newDays = await queryGoalDays(goalId, req.user.id.toString());
+    //return newDays;
     return res.send(day)
 }
 const getLastDayGoal = async(date, goalId) =>{
@@ -188,6 +194,8 @@ const updateProgress = async(req: ProtectedReq, res: Response) =>{
       } 
     }
     console.log(day)
+     //let newDays = await queryGoalDays(oldDay.goal, req.user.id.toString());
+    //return newDays;
     res.send(day)
 }
 const deleteProgress = async(req: ProtectedReq, res: Response) =>{

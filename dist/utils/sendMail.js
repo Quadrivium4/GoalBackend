@@ -133,24 +133,6 @@ var sendMail = function(param) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    // console.log(process.env.GMAIL_CLIENT_ID,
-                    //     process.env.GMAIL_CLIENT_SECRET,
-                    //     process.env.GMAIL_REDIRECT_URI)
-                    // const accessToken = await oAuth2Client.getAccessToken()
-                    // const transporter = nodemailer.createTransport({
-                    //     service: 'gmail',
-                    //     auth: {
-                    //         type: "OAuth2",
-                    //         user: process.env.MY_EMAIL,
-                    //         clientId: process.env.GMAIL_CLIENT_ID,
-                    //         clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                    //         refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                    //         accessToken: accessToken
-                    //     },
-                    //     tls: {
-                    //         rejectUnauthorized: false
-                    //     }
-                    // });
                     transporter = nodemailer.createTransport({
                         host: 'authsmtp.securemail.pro',
                         port: 587,

@@ -175,6 +175,7 @@ import User from "../models/user.js";
 import { ObjectId } from "mongodb";
 import { queryDate } from "../functions/days.js";
 import { queryDayDate } from "./goals.js";
+import AppError from "../utils/appError.js";
 export var getLastSunday = function(date) {
     date = new Date(date);
     date.setDate(date.getDate() - date.getDay());
@@ -285,6 +286,9 @@ var getDays = function(req, res) {
                     _state.label = 2;
                 case 2:
                     if (!user) user = req.user;
+                    if (user.id != req.user.id && user.profileType != "public" && !user.followers.includes(req.user.id.toString())) {
+                        throw new AppError(1, 401, "This profile is private, you cannot get information");
+                    }
                     console.log("getting days:", user);
                     //console.log({timestamp}, req.query)
                     date = new Date(timestamp);
@@ -474,6 +478,8 @@ var postProgress = function(req, res) {
                         day: day,
                         totalProgress: totalProgress
                     });
+                    //let newDays = await queryGoalDays(goalId, req.user.id.toString());
+                    //return newDays;
                     return [
                         2,
                         res.send(day)
@@ -637,6 +643,8 @@ var updateProgress = function(req, res) {
                     _state.label = 8;
                 case 8:
                     console.log(day);
+                    //let newDays = await queryGoalDays(oldDay.goal, req.user.id.toString());
+                    //return newDays;
                     res.send(day);
                     return [
                         2
