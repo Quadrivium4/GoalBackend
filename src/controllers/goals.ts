@@ -63,7 +63,7 @@ const putGoalAmount = async(req: ProtectedReq, res: Response) =>{
 const putGoal = async(req: ProtectedReq, res: Response) =>{
     
     const {title, amount, frequency, _id, date} = req.body;
-    console.log(req.body, queryDate(date))
+    //-- console.log(req.body, queryDate(date))
     let newGoal: TGoal;
     const newGoals = req.user.goals.map(goal =>{
         if(eqOid(goal._id, _id)){
@@ -72,14 +72,14 @@ const putGoal = async(req: ProtectedReq, res: Response) =>{
         }
         return goal
     })
-    console.log(newGoal);
+    //-- console.log(newGoal);
     const newUser = await User.findByIdAndUpdate(req.user.id, {goals: newGoals}, {new: true});
     if(!newGoal) throw new AppError(1, 401, "invalid id");
     // Change Today with new Goal
     let day = await Day.findOneAndUpdate({$and: [{"goal._id": new ObjectId(newGoal._id)}, queryDayDate(date)]}, {goal: newGoal}, {new: true});
-    console.log("day updated", day)
+    //-- console.log("day updated", day)
     if(!day) {
-        console.log("creating new day put goal")
+        //-- console.log("creating new day put goal")
         day = await Day.create({goal: newGoal, date: date, userId: req.user.id })
     }
     res.send(day)

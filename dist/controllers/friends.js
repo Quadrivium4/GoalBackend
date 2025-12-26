@@ -300,18 +300,13 @@ var getLazyFriends = function(req, res) {
                     _req_query = req.query, index = _req_query.index, timestamp = _req_query.timestamp;
                     date = new Date(parseInt(timestamp, 10));
                     date.setHours(0, 0, 0, 0);
-                    console.log({
-                        offset: offset,
-                        index: index,
-                        date: date
-                    });
                     return [
                         4,
                         User.aggregate(aggregateFriendDays(req.user.id, date.getTime(), index * offset, offset))
                     ];
                 case 1:
                     response = _state.sent();
-                    console.log("hey", response);
+                    //-- console.log("hey", response)
                     res.send(response);
                     return [
                         2
@@ -331,9 +326,6 @@ var getFriends = function(req, res) {
                         3,
                         2
                     ];
-                    console.log("getting friend", {
-                        id: id
-                    });
                     return [
                         4,
                         User.findById(id)
@@ -350,7 +342,7 @@ var getFriends = function(req, res) {
                         })
                     ];
                 case 2:
-                    console.log("getFriends...");
+                    //-- console.log("getFriends...")
                     promises = [
                         User.find({
                             _id: {
@@ -384,7 +376,7 @@ var getFriends = function(req, res) {
                         _state.sent(),
                         4
                     ]), followers = _ref[0], incomingFriendRequests = _ref[1], outgoingFriendRequests = _ref[2], friendDays = _ref[3];
-                    //console.log({friends, incomingFriendRequests, outgoingFriendRequests, friendDays})
+                    ////-- console.log({friends, incomingFriendRequests, outgoingFriendRequests, friendDays})
                     return [
                         2,
                         res.send({
@@ -458,10 +450,7 @@ var sendFriendRequest = function(req, res) {
                     ];
                 case 4:
                     user = _state.sent();
-                    console.log("send friend request", {
-                        user: user,
-                        friend: friend
-                    });
+                    //-- console.log("send friend request", {user, friend})
                     res.send(user);
                     return [
                         2
@@ -520,7 +509,7 @@ var acceptFriendRequest = function(req, res) {
                     ];
                 case 1:
                     friend = _state.sent();
-                    console.log(friend._id.toString());
+                    //-- console.log(friend._id.toString());
                     newUserNotifications = req.user.notifications.filter(function(not) {
                         return !(not.type == "incoming request" && not.from.userId == friend.id.toString());
                     });
@@ -558,16 +547,13 @@ var ignoreFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
-                    console.log("ignoring friend request", {
-                        id: id
-                    });
                     return [
                         4,
                         removeRequestAndNotification(id, req.user.id)
                     ];
                 case 1:
                     user = _state.sent();
-                    // console.log("cancel friend request", {
+                    // //-- console.log("cancel friend request", {
                     //     user,
                     // })
                     res.send(user);
@@ -585,9 +571,6 @@ var cancelFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
-                    console.log("canceling friend request", {
-                        id: id
-                    });
                     return [
                         4,
                         User.findById(id)
@@ -600,7 +583,7 @@ var cancelFriendRequest = function(req, res) {
                     ];
                 case 2:
                     user = _state.sent();
-                    // console.log("cancel friend request", {
+                    // //-- console.log("cancel friend request", {
                     //     user, friend
                     // })
                     res.send(user);
@@ -642,10 +625,7 @@ var deleteFollower = function(req, res) {
                     ];
                 case 2:
                     user = _state.sent();
-                    console.log("follower deleted", {
-                        user: user,
-                        friend: friend
-                    });
+                    //-- console.log("follower deleted", {user, friend})
                     res.send(user);
                     return [
                         2
@@ -685,10 +665,7 @@ var unfollow = function(req, res) {
                     ];
                 case 2:
                     user = _state.sent();
-                    console.log("unfollowed", {
-                        user: user,
-                        friend: friend
-                    });
+                    //-- console.log("unfollowed", {user, friend})
                     res.send(user);
                     return [
                         2

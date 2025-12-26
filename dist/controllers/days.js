@@ -173,7 +173,6 @@ function _ts_generator(thisArg, body) {
 import Day from "../models/day.js";
 import User from "../models/user.js";
 import { ObjectId } from "mongodb";
-import { queryDate } from "../functions/days.js";
 import { queryDayDate } from "./goals.js";
 import AppError from "../utils/appError.js";
 export var getLastSunday = function(date) {
@@ -289,8 +288,8 @@ var getDays = function(req, res) {
                     if (user.id != req.user.id && user.profileType != "public" && !user.followers.includes(req.user.id.toString())) {
                         throw new AppError(1, 401, "This profile is private, you cannot get information");
                     }
-                    console.log("getting days:", user);
-                    //console.log({timestamp}, req.query)
+                    //-- console.log("getting days:", user)
+                    ////-- console.log({timestamp}, req.query)
                     date = new Date(timestamp);
                     date.setHours(0, 0, 0, 0);
                     return [
@@ -299,11 +298,7 @@ var getDays = function(req, res) {
                     ];
                 case 3:
                     days = _state.sent();
-                    console.log("found days: ", days.length, {
-                        days: days
-                    }, {
-                        goals: user.goals
-                    }, date, getLastMonday(date), date.getDay());
+                    //-- console.log("found days: ", days.length, {days}, {goals: user.goals}, date, getLastMonday(date), date.getDay())
                     if (days.length < user.goals.length) {
                         user.goals.map(function(goal) {
                             var alreadyExists = days.find(function(day) {
@@ -329,7 +324,6 @@ var getStats = function(req, res) {
             switch(_state.label){
                 case 0:
                     userId = req.params.userId;
-                    console.log(req.params);
                     if (!userId) return [
                         3,
                         2
@@ -401,7 +395,7 @@ var postProgress = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.body);
+                    //-- console.log(req.body)
                     _req_body = req.body, date = _req_body.date, goalId = _req_body.goalId, progress = _req_body.progress, notes = _req_body.notes;
                     progressDate = new Date(date);
                     progressDate.setHours(0, 0, 0, 0);
@@ -422,7 +416,7 @@ var postProgress = function(req, res) {
                         3,
                         3
                     ];
-                    console.log("old day post progress");
+                    //-- console.log("old day post progress");
                     historyEvent = {
                         date: date,
                         progress: progress,
@@ -431,9 +425,6 @@ var postProgress = function(req, res) {
                     };
                     goal = req.user.goals.find(function(goal) {
                         return goalId === goal._id.toString();
-                    });
-                    console.log({
-                        goal: goal
                     });
                     return [
                         4,
@@ -448,6 +439,7 @@ var postProgress = function(req, res) {
                         })
                     ];
                 case 2:
+                    //-- console.log({goal})
                     day = _state.sent();
                     return [
                         2,
@@ -474,10 +466,7 @@ var postProgress = function(req, res) {
                     ];
                 case 4:
                     day = _state.sent();
-                    console.log({
-                        day: day,
-                        totalProgress: totalProgress
-                    });
+                    //-- console.log({day, totalProgress})
                     //let newDays = await queryGoalDays(goalId, req.user.id.toString());
                     //return newDays;
                     return [
@@ -515,7 +504,7 @@ var getLastDayGoal = function(date, goalId) {
                     ];
                 case 1:
                     lastDay = _state.sent();
-                    console.log("last day", lastDay);
+                    //-- console.log("last day", lastDay)
                     return [
                         2,
                         lastDay.goal
@@ -530,7 +519,7 @@ var updateProgress = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.body);
+                    //-- console.log(req.body)
                     _req_body = req.body, date = _req_body.date, id = _req_body.id, progress = _req_body.progress, notes = _req_body.notes, newDate = _req_body.newDate;
                     return [
                         4,
@@ -592,8 +581,6 @@ var updateProgress = function(req, res) {
                     ];
                 case 4:
                     _state.sent();
-                    // Add progress to the new day if exists
-                    console.log(queryDate(newDateObj.getTime()), oldDay.goal);
                     return [
                         4,
                         Day.findOneAndUpdate({
@@ -613,8 +600,9 @@ var updateProgress = function(req, res) {
                         })
                     ];
                 case 5:
+                    // Add progress to the new day if exists
+                    //-- console.log(queryDate(newDateObj.getTime()), oldDay.goal)
                     day = _state.sent();
-                    console.log("updated day", day);
                     return [
                         4,
                         getLastDayGoal(date, oldDay.goal._id)
@@ -625,7 +613,6 @@ var updateProgress = function(req, res) {
                         3,
                         8
                     ];
-                    console.log("update progress creating new day");
                     return [
                         4,
                         Day.create({
@@ -639,10 +626,11 @@ var updateProgress = function(req, res) {
                         })
                     ];
                 case 7:
+                    //-- console.log("update progress creating new day");
                     day = _state.sent();
                     _state.label = 8;
                 case 8:
-                    console.log(day);
+                    //-- console.log(day)
                     //let newDays = await queryGoalDays(oldDay.goal, req.user.id.toString());
                     //return newDays;
                     res.send(day);
@@ -659,7 +647,7 @@ var deleteProgress = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.query);
+                    //-- console.log(req.query)
                     _req_query = req.query, date = _req_query.date, id = _req_query.id;
                     dateNumber = parseInt(date, 10);
                     return [
@@ -678,7 +666,7 @@ var deleteProgress = function(req, res) {
                     ];
                 case 1:
                     day = _state.sent();
-                    console.log(day);
+                    //-- console.log(day)
                     res.send(day);
                     return [
                         2

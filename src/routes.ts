@@ -1,6 +1,6 @@
 import express, {Request, Response as ExpressResponse} from "express"
 import { tryCatch } from "./utils.js";
-import { changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { addPasswordToLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
 import { deleteProgress, getDays, getStats, postProgress, updateProgress } from "./controllers/days.js";
@@ -27,24 +27,24 @@ const protectedRouter = express.Router();
 //const filePath = import.meta.dirname + "/additionalFunctions.js";
 // let fileContent = fs.readFileSync(filePath).toString();
 // fs.watch(filePath, async(event, filename) => {
-//     //console.log(event);
+//     ////-- console.log(event);
 //     let code = fs.readFileSync(filePath).toString();
 //     if(event === "change" && code != fileContent){
-//         //console.log(code);
+//         ////-- console.log(code);
 //         try {
 //             eval(`( async () =>{ 
 //             try{
 //                 ${code} 
 //             }catch(err){
-//                 console.log("err", err)
+//                 //-- console.log("err", err)
 //             }
             
 //         })().then(() => {})
-//         .catch(err => console.log("my", err))`);
+//         .catch(err => //-- console.log("my", err))`);
         
 //         }
 //         catch (error) {
-//             console.log("Error:", error);
+//             //-- console.log("Error:", error);
 //             //throw new AppError(1, 500, "cannot do it");
 //         }
 //         fileContent = code;
@@ -52,17 +52,17 @@ const protectedRouter = express.Router();
    
 // });
 const evalDb = async(req, res) =>{
-    console.log(req.body);
+    //-- console.log(req.body);
     const {code} = req.body;
     try {
         eval(`( async () =>{ ${code} })();`)
     } catch (error) {
-        console.log(error)
+        //-- console.log(error)
         throw new AppError(1, 500, "cannot do it")
     }
     
 }
-publicRouter.get("/ping", tryCatch((req, res)=>{console.log("ping"); res.send({response: "OK"})}))
+publicRouter.get("/ping", tryCatch((req, res)=>{ res.send({response: "OK"})}))
 //publicRouter.post("/eval-db", tryCatch(evalDb))
 publicRouter.post("/register", tryCatch(register));
 publicRouter.post("/login", tryCatch(login));
@@ -73,6 +73,7 @@ publicRouter.post("/google-login", tryCatch(googleLogin))
 publicRouter.post("/delete-account", tryCatch(deleteAccount))
 
 
+protectedRouter.post("/add-password", tryCatch(addPasswordToLogin));
 protectedRouter.use(tryCatch(verifyToken))
 protectedRouter
     .get("/profile", tryCatch(getProfile))

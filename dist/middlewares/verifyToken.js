@@ -130,9 +130,6 @@ var verifyToken = function(req, res, next) {
                 case 0:
                     token = extractBearerToken(req);
                     if (!token) throw new AppError(1, 403, "Invalid Token");
-                    console.log({
-                        token: token
-                    });
                     _state.label = 1;
                 case 1:
                     _state.trys.push([
@@ -142,10 +139,6 @@ var verifyToken = function(req, res, next) {
                         4
                     ]);
                     _jwt_verify = jwt.verify(token, process.env.JWT_A_TOKEN_KEY), id = _jwt_verify.id, email = _jwt_verify.email;
-                    console.log({
-                        id: id,
-                        email: email
-                    });
                     return [
                         4,
                         User.findById(id)

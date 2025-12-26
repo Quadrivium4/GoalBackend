@@ -156,7 +156,7 @@ var tryCatch = function(controller) {
                         ];
                     case 2:
                         error = _state.sent();
-                        console.log("error in try catch");
+                        //-- console.log("error in try catch")
                         return [
                             2,
                             next(error)
@@ -203,23 +203,21 @@ var createTokens = function(id, email) {
 function extractBearerToken(req) {
     if (!req.headers.authorization) return false;
     if (!req.headers.authorization.startsWith("Bearer ")) return false;
-    //console.log("extracting bearer", req.headers.authorization);
+    ////-- console.log("extracting bearer", req.headers.authorization);
     var token = req.headers.authorization.split(" ")[1];
     return token;
 }
 function isOldDay(dayDate, date) {
-    console.log("is Old day?", {
-        dayDate: dayDate
-    }, date);
+    //-- console.log("is Old day?", {dayDate}, date);
     var date1 = new Date(dayDate);
     var date2 = new Date(date);
     date1.setHours(0, 0, 0, 0);
     date2.setHours(0, 0, 0, 0);
     if (date1.getTime() < date2.getTime()) {
-        console.log("yes");
+        //-- console.log("yes")
         return true;
     }
-    console.log("false");
+    //-- console.log("false")
     return false;
 }
 function eqOid(id1, id2) {
@@ -239,14 +237,12 @@ function deleteAllDaysInDate(date) {
                     ];
                 case 1:
                     deleted = _state.sent();
-                    console.log({
-                        deleted: deleted
-                    });
                     return [
                         2
                     ];
             }
         });
+    //-- console.log({deleted})
     })();
 }
 function createRandomToken() {

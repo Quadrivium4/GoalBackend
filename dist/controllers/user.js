@@ -161,7 +161,7 @@ var register = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.body);
+                    //-- console.log(req.body)
                     _req_body = req.body, name = _req_body.name, email = _req_body.email, password = _req_body.password;
                     return [
                         4,
@@ -170,9 +170,7 @@ var register = function(req, res) {
                 case 1:
                     user = _state.sent();
                     link = "".concat(process.env.CLIENT_URL, "/verify/").concat(user.id, "/").concat(user.token);
-                    console.log({
-                        link: link
-                    });
+                    //-- console.log({link})
                     return [
                         4,
                         sendMail({
@@ -192,20 +190,20 @@ var register = function(req, res) {
     })();
 };
 // const signInWithGoogle = async (req, res) => {
-//     console.log("logging with google...")
+//     //-- console.log("logging with google...")
 //     const token = extractBearerToken(req);
 //     if (!token) throw new AppError(1, 403, "Invalid Token");
 //     const { user, aToken } = await createOrLoginUserFromGoogle(token);
-//     console.log({user, aToken})
+//     //-- console.log({user, aToken})
 //     res.send({user, aToken});
 // }
 var verify = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, id, token, _ref, name, email, password, _ref1, user, aToken;
+        var _req_body, id, token, _ref, name, email, password, alreadyExistingUser, aToken, newUser, _ref1, user, aToken1;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.body);
+                    //-- console.log(req.body)
                     _req_body = req.body, id = _req_body.id, token = _req_body.token;
                     return [
                         4,
@@ -213,25 +211,55 @@ var verify = function(req, res) {
                     ];
                 case 1:
                     _ref = _state.sent(), name = _ref.name, email = _ref.email, password = _ref.password;
-                    console.log({
-                        name: name,
-                        email: email,
-                        password: password
-                    });
+                    return [
+                        4,
+                        User.findOne({
+                            changeEmailToken: token
+                        })
+                    ];
+                case 2:
+                    alreadyExistingUser = _state.sent();
+                    if (!alreadyExistingUser) return [
+                        3,
+                        4
+                    ];
+                    aToken = createTokens(alreadyExistingUser.id.toString(), email).aToken;
+                    return [
+                        4,
+                        User.findByIdAndUpdate(alreadyExistingUser.id, {
+                            email: email,
+                            tokens: [
+                                aToken
+                            ]
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 3:
+                    newUser = _state.sent();
+                    return [
+                        2,
+                        res.send({
+                            user: newUser,
+                            aToken: aToken
+                        })
+                    ];
+                case 4:
                     return [
                         4,
                         createUser(name, email, password)
                     ];
-                case 2:
-                    _ref1 = _state.sent(), user = _ref1.user, aToken = _ref1.aToken;
-                    console.log({
-                        user: user,
-                        aToken: aToken
-                    });
-                    res.send({
-                        user: user,
-                        aToken: aToken
-                    });
+                case 5:
+                    _ref1 = _state.sent(), user = _ref1.user, aToken1 = _ref1.aToken;
+                    //-- console.log({user, aToken})
+                    return [
+                        2,
+                        res.send({
+                            user: user,
+                            aToken: aToken1
+                        })
+                    ];
+                case 6:
                     return [
                         2
                     ];
@@ -269,7 +297,7 @@ var verifyResetPassword = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log("verifying reset password", req.body);
+                    //-- console.log("verifying reset/adding password", req.body)
                     _req_body = req.body, id = _req_body.id, token = _req_body.token;
                     return [
                         4,
@@ -277,11 +305,6 @@ var verifyResetPassword = function(req, res) {
                     ];
                 case 1:
                     _ref = _state.sent(), name = _ref.name, email = _ref.email, password = _ref.password;
-                    console.log({
-                        name: name,
-                        email: email,
-                        password: password
-                    });
                     return [
                         4,
                         User.findOneAndUpdate({
@@ -298,6 +321,7 @@ var verifyResetPassword = function(req, res) {
                     return [
                         4,
                         User.findByIdAndUpdate(user.id, {
+                            googleLogin: false,
                             tokens: _to_consumable_array(user.tokens).concat([
                                 aToken
                             ])
@@ -307,10 +331,7 @@ var verifyResetPassword = function(req, res) {
                     ];
                 case 3:
                     user = _state.sent();
-                    console.log({
-                        user: user,
-                        aToken: aToken
-                    });
+                    //-- console.log({user, aToken})
                     res.send({
                         user: user,
                         aToken: aToken
@@ -328,7 +349,7 @@ var resetPassword = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log("resetting password", req.body);
+                    //-- console.log("resetting password", req.body);
                     _req_body = req.body, email = _req_body.email, password = _req_body.password;
                     return [
                         4,
@@ -347,9 +368,6 @@ var resetPassword = function(req, res) {
                     unverifiedUser = _state.sent();
                     //const token = crypto.randomBytes(32).toString("hex");
                     link = "".concat(process.env.CLIENT_URL, "/verify-password/").concat(unverifiedUser.id, "/").concat(unverifiedUser.token);
-                    console.log({
-                        link: link
-                    });
                     return [
                         4,
                         sendMail({
@@ -360,7 +378,7 @@ var resetPassword = function(req, res) {
                     ];
                 case 3:
                     result = _state.sent();
-                    console.log(result);
+                    //-- console.log(result);
                     res.send({
                         user: user,
                         result: result
@@ -374,7 +392,7 @@ var resetPassword = function(req, res) {
 };
 var googleLogin = function(req, res) {
     return _async_to_generator(function() {
-        var token, googleUser, payload, alreadyExistingUser, aToken, user, _ref, user1, aToken1;
+        var token, googleUser, payload, alreadyExistingUser, aToken, user, aToken1, user1, _ref, user2, aToken2;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -392,10 +410,10 @@ var googleLogin = function(req, res) {
                     ];
                 case 1:
                     googleUser = _state.sent();
-                    console.log(googleUser);
+                    //-- console.log(googleUser)
                     if (googleUser.error) throw new AppError(1, 500, "error google");
                     //const ticket = await client.verifyIdToken({idToken: credential, audience: client_id})
-                    //console.log(ticket)
+                    ////-- console.log(ticket)
                     payload = googleUser; //ticket.getPayload()
                     return [
                         4,
@@ -405,15 +423,17 @@ var googleLogin = function(req, res) {
                     ];
                 case 2:
                     alreadyExistingUser = _state.sent();
-                    if (alreadyExistingUser && !alreadyExistingUser.googleLogin) throw new AppError(1, 401, "A user with that email, not logged with google already exists");
-                    if (!(alreadyExistingUser && alreadyExistingUser.googleLogin)) return [
+                    if (!(alreadyExistingUser && !alreadyExistingUser.googleLogin)) return [
                         3,
                         4
                     ];
+                    //throw new AppError(1, 401, "A user with that email, not logged with google already exists");
+                    //-- console.log( "A user with that email, not logged with google already exists");
                     aToken = createTokens(alreadyExistingUser.id, alreadyExistingUser.email).aToken;
                     return [
                         4,
                         User.findByIdAndUpdate(alreadyExistingUser.id, {
+                            googleLogin: true,
                             tokens: _to_consumable_array(alreadyExistingUser.tokens).concat([
                                 aToken
                             ])
@@ -431,19 +451,41 @@ var googleLogin = function(req, res) {
                         })
                     ];
                 case 4:
+                    if (!(alreadyExistingUser && alreadyExistingUser.googleLogin)) return [
+                        3,
+                        6
+                    ];
+                    aToken1 = createTokens(alreadyExistingUser.id, alreadyExistingUser.email).aToken;
+                    return [
+                        4,
+                        User.findByIdAndUpdate(alreadyExistingUser.id, {
+                            tokens: _to_consumable_array(alreadyExistingUser.tokens).concat([
+                                aToken1
+                            ])
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 5:
+                    user1 = _state.sent();
+                    return [
+                        2,
+                        res.send({
+                            user: user1,
+                            aToken: aToken1
+                        })
+                    ];
+                case 6:
                     return [
                         4,
                         createUser(payload.name, payload.email, "", true)
                     ];
-                case 5:
-                    _ref = _state.sent(), user1 = _ref.user, aToken1 = _ref.aToken;
-                    console.log({
-                        user: user1,
-                        aToken: aToken1
-                    });
+                case 7:
+                    _ref = _state.sent(), user2 = _ref.user, aToken2 = _ref.aToken;
+                    //-- console.log({user, aToken})
                     res.send({
-                        user: user1,
-                        aToken: aToken1
+                        user: user2,
+                        aToken: aToken2
                     });
                     return [
                         2
@@ -458,7 +500,6 @@ var profileImgUpload = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.files);
                     return [
                         4,
                         saveFile(req.files.image)
@@ -476,9 +517,7 @@ var profileImgUpload = function(req, res) {
                     ];
                 case 2:
                     user = _state.sent();
-                    console.log("profile image updated", {
-                        user: user
-                    });
+                    //-- console.log("profile image updated",{ user})
                     res.send(fileId);
                     return [
                         2
@@ -494,9 +533,7 @@ var getProfile = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.query.id;
-                    console.log("getting user", {
-                        id: id
-                    });
+                    //-- console.log("getting user", {id})
                     if (!id || id == req.user.id.toString()) return [
                         2,
                         res.send(req.user)
@@ -527,9 +564,7 @@ var getUser = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.query.id;
-                    console.log("getting user", {
-                        id: id
-                    });
+                    //-- console.log("getting user", {id})
                     if (!id || id == req.user.id.toString()) return [
                         2,
                         res.send(req.user)
@@ -557,7 +592,7 @@ var getUser = function(req, res) {
 };
 var changeEmail = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, email, password, user, passwordsCheck, newUser;
+        var _req_body, email, password, user, passwordsCheck, unverifiedUser, newUser, link;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -582,14 +617,26 @@ var changeEmail = function(req, res) {
                     if (!passwordsCheck) throw new AppError(1003, 401, "Invalid Password");
                     return [
                         4,
+                        createUnverifiedUser(req.user.name, email, password)
+                    ];
+                case 3:
+                    unverifiedUser = _state.sent();
+                    return [
+                        4,
                         User.findByIdAndUpdate(req.user.id, {
-                            email: email
+                            changeEmailToken: unverifiedUser.token
                         }, {
                             new: true
                         })
                     ];
-                case 3:
+                case 4:
                     newUser = _state.sent();
+                    link = "".concat(process.env.CLIENT_URL, "/verify/").concat(unverifiedUser.id, "/").concat(unverifiedUser.token);
+                    sendMail({
+                        to: email,
+                        subject: "Goal - Change Email",
+                        body: "<p>Hi ".concat(req.user.name, ', </p>\n                <p>We received a request to change your account email.</p>\n                <p>Click the link below to confirm:</p>\n                <a href="').concat(link, '">Change Email</a>\n            \n                ')
+                    });
                     return [
                         2,
                         res.send(newUser)
@@ -639,7 +686,7 @@ var getUsers = function(req, res) {
                     _req_query = req.query, search = _req_query.search, index = _req_query.index, offset = _req_query.offset, flt = _req_query.filter;
                     if (!index) index = 0;
                     if (!offset) offset = 20;
-                    console.log("get users query: ", req.query);
+                    //-- console.log("get users query: ", req.query);
                     filter = {
                         _id: {
                             $ne: req.user._id
@@ -659,7 +706,7 @@ var getUsers = function(req, res) {
                             $regex: "(?i)^" + search
                         };
                     }
-                    console.log(filter);
+                    //-- console.log(filter)
                     projection = {
                         name: 1,
                         profileImg: 1,
@@ -715,9 +762,8 @@ var getNotifications = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.query);
                     if (typeof req.query.timestamp == 'string') timestamp = parseInt(req.query.timestamp, 10);
-                    //console.log({timestamp}, req.query)
+                    ////-- console.log({timestamp}, req.query)
                     date = new Date(timestamp);
                     date.setHours(0, 0, 0, 0);
                     return [
@@ -740,21 +786,15 @@ var readNotifications = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.body);
+                    //-- console.log(req.body)
                     ids = req.body.ids;
                     newNotifications = req.user.notifications.map(function(not) {
-                        console.log({
-                            _id: not._id,
-                            ids: ids
-                        });
+                        //-- console.log({_id: not._id, ids})
                         if (ids.includes(not._id.toString())) {
-                            console.log("changing read status");
+                            //-- console.log("changing read status");
                             not.status = 'read';
                         }
                         return not;
-                    });
-                    console.log({
-                        newNotifications: newNotifications
                     });
                     return [
                         4,
@@ -780,7 +820,7 @@ var readNotifications = function(req, res) {
 //     const user = await User.findByIdAndUpdate(req.user.id,{
 //         profileImg: fileId
 //     },{new: true})
-//     console.log("profile image updated",{ user})
+//     //-- console.log("profile image updated",{ user})
 //     res.send(fileId)
 // }
 var deleteAccountRequest = function(req, res) {
@@ -849,13 +889,59 @@ var deleteAccount = function(req, res) {
         });
     })();
 };
+var addPasswordToLogin = function(req, res) {
+    return _async_to_generator(function() {
+        var _req_body, email, password, user, unverifiedUser, link, result;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    //-- console.log("resetting password", req.body);
+                    _req_body = req.body, email = _req_body.email, password = _req_body.password;
+                    return [
+                        4,
+                        User.findOne({
+                            email: email
+                        })
+                    ];
+                case 1:
+                    user = _state.sent();
+                    if (!user) throw new AppError(1002, 404, "User with that email not found");
+                    return [
+                        4,
+                        createResetPasswordUser(user.name, user.email, password)
+                    ];
+                case 2:
+                    unverifiedUser = _state.sent();
+                    //const token = crypto.randomBytes(32).toString("hex");
+                    link = "".concat(process.env.CLIENT_URL, "/verify-password/").concat(unverifiedUser.id, "/").concat(unverifiedUser.token);
+                    return [
+                        4,
+                        sendMail({
+                            to: user.email,
+                            subject: "Goal - Change Login Method",
+                            body: "<p>Hi ".concat(user.name, ', </p>\n                <p>We received a request to change your login method to email and password</p>\n                <p>Click the link below to confirm:</p>\n                <a href="').concat(link, '">Change login method</a>\n                ')
+                        })
+                    ];
+                case 3:
+                    result = _state.sent();
+                    //-- console.log(result);
+                    res.send({
+                        user: user,
+                        result: result
+                    });
+                    return [
+                        2
+                    ];
+            }
+        });
+    })();
+};
 var logout = function(req, res) {
     return _async_to_generator(function() {
         var user;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log("logging out");
                     return [
                         4,
                         logoutUser(req.user, req.token)
@@ -872,4 +958,4 @@ var logout = function(req, res) {
         });
     })();
 };
-export { register, resetPassword, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile };
+export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile };

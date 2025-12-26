@@ -2,7 +2,7 @@ import path from "path"
 
 // Error.stackTraceLimit = 1;
 // Error.prepareStackTrace = (_, callSites) => {
-//     console.log(_)
+//     //-- console.log(_)
 //     let stack = []
 //     callSites.forEach(call => {
 //         stack.push({
@@ -11,7 +11,7 @@ import path from "path"
 //             line: call.getLineNumber(),
 //             path: call.getFileName(),
 //         })
-//         console.log(call.getFileName())
+//         //-- console.log(call.getFileName())
 //     })
 //     return stack
 // }

@@ -118,7 +118,7 @@ function _is_native_reflect_construct() {
 }
 // Error.stackTraceLimit = 1;
 // Error.prepareStackTrace = (_, callSites) => {
-//     console.log(_)
+//     //-- console.log(_)
 //     let stack = []
 //     callSites.forEach(call => {
 //         stack.push({
@@ -127,7 +127,7 @@ function _is_native_reflect_construct() {
 //             line: call.getLineNumber(),
 //             path: call.getFileName(),
 //         })
-//         console.log(call.getFileName())
+//         //-- console.log(call.getFileName())
 //     })
 //     return stack
 // }

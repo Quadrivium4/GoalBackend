@@ -79,10 +79,6 @@ function _object_spread_props(target, source) {
     }
     return target;
 }
-function _type_of(obj) {
-    "@swc/helpers - typeof";
-    return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj;
-}
 function _ts_generator(thisArg, body) {
     var f, y, t, _ = {
         label: 0,
@@ -264,10 +260,6 @@ var removeRequestAndNotification = function(requestingId, receivingId) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log({
-                        requestingId: requestingId,
-                        receivingId: receivingId
-                    });
                     return [
                         4,
                         User.findByIdAndUpdate(requestingId, {
@@ -280,7 +272,6 @@ var removeRequestAndNotification = function(requestingId, receivingId) {
                     ];
                 case 1:
                     friend = _state.sent();
-                    console.log(typeof requestingId === "undefined" ? "undefined" : _type_of(requestingId));
                     return [
                         4,
                         User.findByIdAndUpdate(receivingId, {
@@ -297,7 +288,7 @@ var removeRequestAndNotification = function(requestingId, receivingId) {
                     ];
                 case 2:
                     user = _state.sent();
-                    console.log("not length", user.notifications.length);
+                    //-- console.log("not length", user.notifications.length)
                     return [
                         2,
                         user
@@ -312,12 +303,9 @@ var deleteOldNotifications = function(userId, date) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //console.log("deleting old notifications");
+                    ////-- console.log("deleting old notifications");
                     date = new Date(date);
                     date.setHours(0, 0, 0, 0);
-                    // const user = await User.find({"notifications.date": {$lte: date.getTime()}});
-                    // console.log(user, date.getTime())
-                    console.log(date.getTime(), "deleting notifications");
                     return [
                         4,
                         User.findByIdAndUpdate(userId, {

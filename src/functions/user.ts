@@ -10,13 +10,14 @@ import UnverifiedUser from "../models/unverifiedUser.js";
 import { isValidObjectId } from "mongoose";
 import Day from "../models/day.js";
 import { ObjectId } from "mongodb";
+import { deleteFile } from "../utils/files.js";
 
 const createOrLoginUserFromGoogle = async(accessToken) =>{
     const googleUser = await fetch("https://www.googleapis.com/userinfo/v2/me", {
         headers: { Authorization: `Bearer ${accessToken}` }
     }).then(res => res.json());
     if (googleUser.error) throw new AppError(1, 401, googleUser.error.message);
-    console.log({googleUser})
+    //-- console.log({googleUser})
     let user = await User.findOne({
         email: googleUser.email
     });
@@ -31,7 +32,7 @@ const createOrLoginUserFromGoogle = async(accessToken) =>{
         {
             tokens: [...user.tokens, aToken]
         }, { new: true });
-    console.log({user, aToken})
+    //-- console.log({user, aToken})
     return { user, aToken };
 }
 
@@ -109,19 +110,26 @@ const verifyUser = async(id, token) =>{
     console.log(id, token)
     if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid Id");
     const unverifiedUser = await UnverifiedUser.findOneAndDelete({_id: id, token});
-    console.log({unverifiedUser})
+    //-- console.log({unverifiedUser})
     if (!unverifiedUser) throw new AppError(1, 401, "Cannot Verify User");
     return unverifiedUser;
 }
 const deleteUser = async(id: string) =>{
     const deletedUser: TUser = await User.findByIdAndDelete(id);
-    const deletedDays = await Day.deleteMany({userId: id});
-    if(!deletedUser ) throw new AppError(1, 401, "No User to delete found");
-    const friendOids = deletedUser.friends.map(friendId => new ObjectId(friendId));
     
-    const deletedFriends = await User.updateMany({_id: {$in: friendOids}}, { $pull: {
-            friends: deletedUser.id
-        }})
+    if(!deletedUser ) throw new AppError(1, 401, "No User to delete found");
+    const deletedDays = await Day.deleteMany({userId: id});
+    const followersOids = deletedUser.followers.map(friendId => new ObjectId(friendId));
+    const followingOids = deletedUser.followers.map(friendId => new ObjectId(friendId));
+    
+    const updatedFollowers = await User.updateMany({_id: {$in: followersOids}}, { $pull: {
+            following: deletedUser.id
+        }});
+
+    const updatedFollowing = await User.updateMany({_id: {$in: followingOids}}, { $pull: {
+        followers: deletedUser.id
+    }});
+    deleteFile(deletedUser.profileImg);
     return deletedUser
 }
 const logoutUser = async(user, token) =>{

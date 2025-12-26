@@ -197,9 +197,9 @@ function logger(param) {
 var errorHandler = function(err, req, res, next) {
     return _async_to_generator(function() {
         return _ts_generator(this, function(_state) {
-            console.log("error handler");
+            //-- console.log("error handler")
             if (_instanceof(err, AppError)) {
-                //console.log("My Error", err.stack)
+                ////-- console.log("My Error", err.stack)
                 logger([
                     "---- Is Not Your Fault ----",
                     {

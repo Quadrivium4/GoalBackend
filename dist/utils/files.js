@@ -132,7 +132,7 @@ var saveFile = function(file) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log("saving file.. " + file.name);
+                    //-- console.log("saving file.. " + file.name);
                     b64 = Buffer.from(file.data).toString("base64");
                     dataURI = "data:" + file.mimetype + ";base64," + b64;
                     _state.label = 1;
@@ -149,7 +149,7 @@ var saveFile = function(file) {
                     ];
                 case 2:
                     result = _state.sent();
-                    console.log(result);
+                    //-- console.log(result);
                     return [
                         2,
                         {
@@ -160,7 +160,6 @@ var saveFile = function(file) {
                     ];
                 case 3:
                     error = _state.sent();
-                    console.log("cloudinary error", error);
                     return [
                         3,
                         4
@@ -178,7 +177,6 @@ var deleteFile = function(file) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log("deleting file", file);
                     if (!file.public_id) return [
                         3,
                         2
@@ -191,12 +189,9 @@ var deleteFile = function(file) {
                     _state.sent();
                     return [
                         3,
-                        3
+                        2
                     ];
                 case 2:
-                    console.log("no public id in deleting file...");
-                    _state.label = 3;
-                case 3:
                     return [
                         2
                     ];
@@ -205,13 +200,13 @@ var deleteFile = function(file) {
     })();
 };
 // const saveFiles = async(files)=>{
-//     console.log("saving multiple files", {files})
+//     //-- console.log("saving multiple files", {files})
 //     const promises = [];
 //     for (const file of files) {
 //         promises.push(saveFile(file));
 //     }
 //     const results = await Promise.all(promises);
-//     console.log({results});
+//     //-- console.log({results});
 //     return results;
 // }
 // const getFile = async(id)=>{
@@ -224,7 +219,7 @@ var deleteFile = function(file) {
 //     return values
 // }
 // const downloadFile = async(req, res) =>{
-//     console.log({params: req.params})
+//     //-- console.log({params: req.params})
 //     let id = req.params.id;
 //     let stream = await bucket.actions.openDownloadStream(new ObjectId(id));
 //     stream.on("error",(err)=>{

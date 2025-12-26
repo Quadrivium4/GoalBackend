@@ -16,7 +16,7 @@ const tryCatch = (controller: any) => async (req, res, next) => {
     try {
         await controller(req, res, next);
     } catch (error) {
-        console.log("error in try catch")
+        //-- console.log("error in try catch")
         return next(error)
     }
 }
@@ -44,21 +44,21 @@ const createTokens = (id: string, email: string)=>{
 function extractBearerToken(req){
     if (!req.headers.authorization) return false
     if (!req.headers.authorization.startsWith("Bearer ")) return false;
-    //console.log("extracting bearer", req.headers.authorization);
+    ////-- console.log("extracting bearer", req.headers.authorization);
     const token = req.headers.authorization.split(" ")[1];
     return token;
 }
 function isOldDay(dayDate: number, date: number){
-    console.log("is Old day?", {dayDate}, date);
+    //-- console.log("is Old day?", {dayDate}, date);
     const date1 = new Date(dayDate);
     const date2 = new Date(date);
     date1.setHours(0,0,0,0);
     date2.setHours(0,0,0,0);
     if(date1.getTime() < date2.getTime()){
-        console.log("yes")
+        //-- console.log("yes")
         return true
     }
-    console.log("false")
+    //-- console.log("false")
     return false
 }
 function eqOid(id1: string | ObjectId, id2: string | ObjectId){
@@ -68,7 +68,7 @@ function eqOid(id1: string | ObjectId, id2: string | ObjectId){
 }
 async function deleteAllDaysInDate(date: number | Date) {
     const deleted = await Day.deleteMany(queryDayDate(date));
-    console.log({deleted})
+    //-- console.log({deleted})
 }
 function createRandomToken(){
     return crypto.randomBytes(32).toString("hex")

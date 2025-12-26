@@ -153,15 +153,12 @@ app.listen(port, function() {
                     ];
                 case 1:
                     _state.sent();
-                    //await updateUsersDb()
-                    console.log("Server listening on port ".concat(port));
                     return [
                         3,
                         3
                     ];
                 case 2:
                     err = _state.sent();
-                    console.log("Cannot start server:", err);
                     return [
                         3,
                         3

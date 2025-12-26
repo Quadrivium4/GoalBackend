@@ -127,7 +127,7 @@ var updateProgressLikes = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.body);
+                    //-- console.log(req.body)
                     _req_body = req.body, date = _req_body.date, id = _req_body.id;
                     return [
                         4,
@@ -159,7 +159,7 @@ var updateProgressLikes = function(req, res) {
                         date: Date.now(),
                         content: req.user.name + " liked your activity"
                     });
-                    console.log(day);
+                    //-- console.log(day);
                     res.send(day);
                     return [
                         2
@@ -174,10 +174,9 @@ var deleteProgressLikes = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    console.log(req.query);
+                    //-- console.log(req.query)
                     _req_query = req.query, timestamp = _req_query.timestamp, id = _req_query.id;
                     date = parseInt(timestamp, 10);
-                    console.log(date);
                     return [
                         4,
                         Day.findOneAndUpdate({
@@ -195,7 +194,7 @@ var deleteProgressLikes = function(req, res) {
                     ];
                 case 1:
                     day = _state.sent();
-                    console.log(day);
+                    //-- console.log(day)
                     res.send(day);
                     return [
                         2

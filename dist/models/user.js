@@ -39,7 +39,7 @@ var UserSchema = new mongoose.Schema({
     },
     tokens: [],
     goals: [],
-    friends: [],
+    //friends: [],
     bio: {
         type: String,
         trim: true
@@ -52,6 +52,9 @@ var UserSchema = new mongoose.Schema({
         name: String
     },
     deletionToken: {
+        type: String
+    },
+    changeEmailToken: {
         type: String
     },
     notifications: [

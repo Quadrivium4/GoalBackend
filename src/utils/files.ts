@@ -15,41 +15,41 @@ export interface TFile {
 }
 
 const saveFile = async(file): Promise<TFile> =>{
-    console.log("saving file.. " + file.name);
+    //-- console.log("saving file.. " + file.name);
     const b64 = Buffer.from(file.data).toString("base64");
     let dataURI = "data:" + file.mimetype + ";base64," + b64;
-   // console.log({dataURI, b64, mimetype: file.mimetype, name: file.name})
+   // //-- console.log({dataURI, b64, mimetype: file.mimetype, name: file.name})
    try {
      const result = await cloudinary.uploader.upload(dataURI);
-     console.log(result);
+     //-- console.log(result);
     return {
         url: result.url,
         name: file.name,
         public_id: result.public_id
     }
    } catch (error) {
-    console.log("cloudinary error", error)
+    //-- console.log("cloudinary error", error)
    }
    
 }
 const deleteFile = async(file: TFile) =>{
-    console.log("deleting file", file);
+    //-- console.log("deleting file", file);
     if(file.public_id){
         await cloudinary.uploader.destroy(file.public_id);
     }else{
-        console.log("no public id in deleting file...")
+        //-- console.log("no public id in deleting file...")
     }
     
 }
 // const saveFiles = async(files)=>{
-//     console.log("saving multiple files", {files})
+//     //-- console.log("saving multiple files", {files})
 //     const promises = [];
 //     for (const file of files) {
 //         promises.push(saveFile(file));
         
 //     }
 //     const results = await Promise.all(promises);
-//     console.log({results});
+//     //-- console.log({results});
 //     return results;
 // }
 // const getFile = async(id)=>{
@@ -63,7 +63,7 @@ const deleteFile = async(file: TFile) =>{
 // }
 
 // const downloadFile = async(req, res) =>{
-//     console.log({params: req.params})
+//     //-- console.log({params: req.params})
 //     let id = req.params.id;
 
 //     let stream = await bucket.actions.openDownloadStream(new ObjectId(id));

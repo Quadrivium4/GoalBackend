@@ -81,7 +81,6 @@ export interface TUser extends mongoose.Document  {
     tokens: string[],
     profileImg: TFile,
     goals: TGoal[],
-    friends: string[],
     bio: string,
     googleLogin?: boolean,
     outgoingFriendRequests: string[],
@@ -89,6 +88,7 @@ export interface TUser extends mongoose.Document  {
     followers: string[],
     following: string[],
     deletionToken?: string,
+    changeEmailToken?: string,
     notifications: TNotification[],
     profileType: TProfileType,
     pro: boolean
@@ -113,7 +113,7 @@ const UserSchema = new mongoose.Schema({
     },
     tokens: [],
     goals: [],
-    friends: [],
+    //friends: [],
     bio: {
         type: String,
         trim: true
@@ -126,6 +126,9 @@ const UserSchema = new mongoose.Schema({
         name: String
     },
     deletionToken: {
+        type: String
+    },
+    changeEmailToken: {
         type: String
     },
     notifications: [NotificationSchema],

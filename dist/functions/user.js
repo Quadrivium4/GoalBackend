@@ -153,6 +153,7 @@ import UnverifiedUser from "../models/unverifiedUser.js";
 import { isValidObjectId } from "mongoose";
 import Day from "../models/day.js";
 import { ObjectId } from "mongodb";
+import { deleteFile } from "../utils/files.js";
 var createOrLoginUserFromGoogle = function(accessToken) {
     return _async_to_generator(function() {
         var googleUser, user, aToken;
@@ -172,9 +173,6 @@ var createOrLoginUserFromGoogle = function(accessToken) {
                 case 1:
                     googleUser = _state.sent();
                     if (googleUser.error) throw new AppError(1, 401, googleUser.error.message);
-                    console.log({
-                        googleUser: googleUser
-                    });
                     return [
                         4,
                         User.findOne({
@@ -211,10 +209,7 @@ var createOrLoginUserFromGoogle = function(accessToken) {
                     ];
                 case 5:
                     user = _state.sent();
-                    console.log({
-                        user: user,
-                        aToken: aToken
-                    });
+                    //-- console.log({user, aToken})
                     return [
                         2,
                         {
@@ -417,9 +412,7 @@ var verifyUser = function(id, token) {
                     ];
                 case 1:
                     unverifiedUser = _state.sent();
-                    console.log({
-                        unverifiedUser: unverifiedUser
-                    });
+                    //-- console.log({unverifiedUser})
                     if (!unverifiedUser) throw new AppError(1, 401, "Cannot Verify User");
                     return [
                         2,
@@ -431,7 +424,7 @@ var verifyUser = function(id, token) {
 };
 var deleteUser = function(id) {
     return _async_to_generator(function() {
-        var deletedUser, deletedDays, friendOids, deletedFriends;
+        var deletedUser, deletedDays, followersOids, followingOids, updatedFollowers, updatedFollowing;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -441,6 +434,7 @@ var deleteUser = function(id) {
                     ];
                 case 1:
                     deletedUser = _state.sent();
+                    if (!deletedUser) throw new AppError(1, 401, "No User to delete found");
                     return [
                         4,
                         Day.deleteMany({
@@ -449,24 +443,41 @@ var deleteUser = function(id) {
                     ];
                 case 2:
                     deletedDays = _state.sent();
-                    if (!deletedUser) throw new AppError(1, 401, "No User to delete found");
-                    friendOids = deletedUser.friends.map(function(friendId) {
+                    followersOids = deletedUser.followers.map(function(friendId) {
+                        return new ObjectId(friendId);
+                    });
+                    followingOids = deletedUser.followers.map(function(friendId) {
                         return new ObjectId(friendId);
                     });
                     return [
                         4,
                         User.updateMany({
                             _id: {
-                                $in: friendOids
+                                $in: followersOids
                             }
                         }, {
                             $pull: {
-                                friends: deletedUser.id
+                                following: deletedUser.id
                             }
                         })
                     ];
                 case 3:
-                    deletedFriends = _state.sent();
+                    updatedFollowers = _state.sent();
+                    return [
+                        4,
+                        User.updateMany({
+                            _id: {
+                                $in: followingOids
+                            }
+                        }, {
+                            $pull: {
+                                followers: deletedUser.id
+                            }
+                        })
+                    ];
+                case 4:
+                    updatedFollowing = _state.sent();
+                    deleteFile(deletedUser.profileImg);
                     return [
                         2,
                         deletedUser
