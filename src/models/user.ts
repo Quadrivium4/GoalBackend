@@ -135,7 +135,8 @@ const UserSchema = new mongoose.Schema({
     followers: [],
     following: [],
     profileType: {
-        type: String
+        type: String,
+    
     },
     pro: {
         type: Boolean

@@ -192,7 +192,8 @@ var createOrLoginUserFromGoogle = function(accessToken) {
                         4,
                         User.create({
                             name: googleUser.given_name,
-                            email: googleUser.email
+                            email: googleUser.email,
+                            profileType: "public"
                         })
                     ];
                 case 3:
@@ -241,7 +242,8 @@ var createUser = function(name, email, password) {
                             email: email,
                             password: password,
                             googleLogin: googleLogin,
-                            goals: []
+                            goals: [],
+                            profileType: "public"
                         })
                     ];
                 case 1:

@@ -24,7 +24,8 @@ const createOrLoginUserFromGoogle = async(accessToken) =>{
     if (!user) {
         user = await User.create({
         name: googleUser.given_name,
-        email: googleUser.email
+        email: googleUser.email,
+        profileType: "public",
     });
 }
     const { aToken } = createTokens(user.id, user.email);
@@ -42,7 +43,8 @@ const createUser = async(name:string, email:string, password: string, googleLogi
         email,
         password,
         googleLogin,
-        goals: []
+        goals: [],
+        profileType: "public"
     });
     const {aToken} = createTokens(user.id, email);
     user = await User.findByIdAndUpdate(user.id, 
