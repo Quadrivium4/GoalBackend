@@ -18,8 +18,8 @@ const sendMail = async ({to, subject, body, attachments = []}) => {
   console.log("Sending mail", process.env.MAIL_PSW)
     const transporter  = nodemailer.createTransport({
     host: 'authsmtp.securemail.pro',
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    port: 465,
+    secure: true, // true for 465, false for other ports
     auth: {
       user: 'support@goalapp.it', // your domain email address
       pass: process.env.MAIL_PSW // your password
