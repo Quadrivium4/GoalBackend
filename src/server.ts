@@ -23,10 +23,10 @@ app.listen(port, async()=>{
         await connectDB(process.env.MONGO_URI);
         
     //await updateUsersDb()
-        //-- console.log(`Server listening on port ${port}`)
+        console.log(`Server listening on port ${port}`)
         //await deleteAllDaysInDate(1744359051162)
     }catch(err){
-        //-- console.log("Cannot start server:", err)
+       console.log("Cannot start server:", err)
     }
 })
 const updateDaysDb = async() =>{

@@ -4,7 +4,7 @@ import Day from "../models/day.js";
 import User, { TNotification } from "../models/user.js";
 import AppError from "../utils/appError.js";
 import express, { Express, Request, Response } from "express";
-import { addNotification, deleteRequestsNotification, getUserFriends, removeRequestAndNotification } from "../functions/friends.js";
+import { addNotification, deleteRequestsNotification,  removeRequestAndNotification } from "../functions/friends.js";
 import { dayInMilliseconds } from "../utils.js";
 import { getLastMonday, getLastSunday } from "./days.js";
 import { ProtectedReq } from "../routes.js";
@@ -123,17 +123,17 @@ const getLazyFriends = async(req, res) =>{
     const date = new Date(parseInt(timestamp, 10));
     date.setHours(0,0,0,0);
 
-    //-- console.log({offset, index, date})
+     console.log({offset, index, date})
     //const friends = await getUserFriends(req.user);
     const response = await User.aggregate(aggregateFriendDays(req.user.id, date.getTime(), index * offset, offset));
     
-    //-- console.log("hey", response)
+     console.log("hey", response)
     res.send(response)
 }
 const getFriends = async (req, res) => {
     const {id} = req.params;
     if(id){
-        //-- console.log("getting friend", { id })
+         console.log("getting friend", { id })
         //let isFriend = req.user.friends.find(friend => friend.id == id);
         //if(!isFriend) throw new AppError(1, 400, "is not your friend")
         const friend = await User.findById(id);
@@ -144,7 +144,7 @@ const getFriends = async (req, res) => {
             goals: friend.goals
         })
     }else{
-        //-- console.log("getFriends...")
+         console.log("getFriends...")
         let promises = [
             User.find({_id: {$in: req.user.followers}}), 
             User.find({_id: {$in: req.user.incomingFriendRequests}}), 
@@ -169,7 +169,7 @@ const getFriends = async (req, res) => {
         let [followers, incomingFriendRequests, outgoingFriendRequests, friendDays] = await Promise.all(promises);
         
         
-        ////-- console.log({friends, incomingFriendRequests, outgoingFriendRequests, friendDays})
+        // console.log({friends, incomingFriendRequests, outgoingFriendRequests, friendDays})
         return res.send({followers, incomingFriendRequests, outgoingFriendRequests, friendDays})
     }
     
@@ -199,7 +199,7 @@ const sendFriendRequest = async(req, res) =>{
             outgoingFriendRequests: id
         }
     }, {new: true})
-    //-- console.log("send friend request", {user, friend})
+     console.log("send friend request", {user, friend})
     res.send(user)
 
 }
@@ -207,7 +207,7 @@ const acceptedFriendNotification = (name: string, id: string) : TNotification=> 
   type: "accepted request",
   date: Date.now(),
   _id: new ObjectId().toHexString(),
-  content: "you are now following...",
+  content: `you are now following ${name}`,
   from:{
     userId: id,
     name: name
@@ -237,7 +237,7 @@ const acceptFriendRequest = async(req: ProtectedReq, res) =>{
             outgoingFriendRequests: req.user.id
         }
     }, {new: true})
-    //-- console.log(friend._id.toString());
+     console.log(friend._id.toString());
 
     let newUserNotifications = req.user.notifications.filter(not =>{
       return !(not.type == "incoming request" && not.from.userId == friend.id.toString())
@@ -261,10 +261,10 @@ const acceptFriendRequest = async(req: ProtectedReq, res) =>{
 }
 const ignoreFriendRequest = async (req, res) => {
     const { id } = req.params;
-    //-- console.log("ignoring friend request", {id})
+     console.log("ignoring friend request", {id})
     //if (!req.user.incomingFriendRequests.includes(id)) throw new AppError(1, 400, `No friend request found from him`);
     const user = await removeRequestAndNotification(id, req.user.id);
-    // //-- console.log("cancel friend request", {
+    //  console.log("cancel friend request", {
     //     user,
     // })
     res.send(user)
@@ -272,12 +272,12 @@ const ignoreFriendRequest = async (req, res) => {
 }
 const cancelFriendRequest = async (req, res) => {
     const { id } = req.params;
-    //-- console.log("canceling friend request", {id})
+     console.log("canceling friend request", {id})
     //if (!req.user.outgoingFriendRequests.includes(id)) throw new AppError(1, 400, `You didn't send any friend request to him!`);
     const friend = await User.findById(id)
     const user = await removeRequestAndNotification(req.user.id, id)
 
-    // //-- console.log("cancel friend request", {
+    //  console.log("cancel friend request", {
     //     user, friend
     // })
     res.send(user)
@@ -298,7 +298,7 @@ const deleteFollower = async(req, res) =>{
             followers: id
         },
     }, { new: true })
-    //-- console.log("follower deleted", {user, friend})
+     console.log("follower deleted", {user, friend})
     res.send(user)
 }
 const unfollow = async(req: ProtectedReq, res) =>{
@@ -315,7 +315,7 @@ const unfollow = async(req: ProtectedReq, res) =>{
             following: id
         },
     }, { new: true })
-    //-- console.log("unfollowed", {user, friend})
+     console.log("unfollowed", {user, friend})
     res.send(user)
 }
 export  {

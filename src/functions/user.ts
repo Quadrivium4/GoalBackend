@@ -17,7 +17,7 @@ const createOrLoginUserFromGoogle = async(accessToken) =>{
         headers: { Authorization: `Bearer ${accessToken}` }
     }).then(res => res.json());
     if (googleUser.error) throw new AppError(1, 401, googleUser.error.message);
-    //-- console.log({googleUser})
+     console.log({googleUser})
     let user = await User.findOne({
         email: googleUser.email
     });
@@ -32,7 +32,7 @@ const createOrLoginUserFromGoogle = async(accessToken) =>{
         {
             tokens: [...user.tokens, aToken]
         }, { new: true });
-    //-- console.log({user, aToken})
+     console.log({user, aToken})
     return { user, aToken };
 }
 
@@ -110,7 +110,7 @@ const verifyUser = async(id, token) =>{
     console.log(id, token)
     if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid Id");
     const unverifiedUser = await UnverifiedUser.findOneAndDelete({_id: id, token});
-    //-- console.log({unverifiedUser})
+     console.log({unverifiedUser})
     if (!unverifiedUser) throw new AppError(1, 401, "Cannot Verify User");
     return unverifiedUser;
 }

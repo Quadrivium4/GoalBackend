@@ -173,6 +173,9 @@ var createOrLoginUserFromGoogle = function(accessToken) {
                 case 1:
                     googleUser = _state.sent();
                     if (googleUser.error) throw new AppError(1, 401, googleUser.error.message);
+                    console.log({
+                        googleUser: googleUser
+                    });
                     return [
                         4,
                         User.findOne({
@@ -209,7 +212,10 @@ var createOrLoginUserFromGoogle = function(accessToken) {
                     ];
                 case 5:
                     user = _state.sent();
-                    //-- console.log({user, aToken})
+                    console.log({
+                        user: user,
+                        aToken: aToken
+                    });
                     return [
                         2,
                         {
@@ -412,7 +418,9 @@ var verifyUser = function(id, token) {
                     ];
                 case 1:
                     unverifiedUser = _state.sent();
-                    //-- console.log({unverifiedUser})
+                    console.log({
+                        unverifiedUser: unverifiedUser
+                    });
                     if (!unverifiedUser) throw new AppError(1, 401, "Cannot Verify User");
                     return [
                         2,

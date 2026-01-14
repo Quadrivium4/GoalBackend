@@ -161,7 +161,7 @@ var register = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //-- console.log(req.body)
+                    console.log(req.body);
                     _req_body = req.body, name = _req_body.name, email = _req_body.email, password = _req_body.password;
                     return [
                         4,
@@ -170,7 +170,9 @@ var register = function(req, res) {
                 case 1:
                     user = _state.sent();
                     link = "".concat(process.env.CLIENT_URL, "/verify/").concat(user.id, "/").concat(user.token);
-                    //-- console.log({link})
+                    console.log({
+                        link: link
+                    });
                     return [
                         4,
                         sendMail({
@@ -190,11 +192,11 @@ var register = function(req, res) {
     })();
 };
 // const signInWithGoogle = async (req, res) => {
-//     //-- console.log("logging with google...")
+//      console.log("logging with google...")
 //     const token = extractBearerToken(req);
 //     if (!token) throw new AppError(1, 403, "Invalid Token");
 //     const { user, aToken } = await createOrLoginUserFromGoogle(token);
-//     //-- console.log({user, aToken})
+//      console.log({user, aToken})
 //     res.send({user, aToken});
 // }
 var verify = function(req, res) {
@@ -203,7 +205,7 @@ var verify = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //-- console.log(req.body)
+                    console.log(req.body);
                     _req_body = req.body, id = _req_body.id, token = _req_body.token;
                     return [
                         4,
@@ -245,13 +247,21 @@ var verify = function(req, res) {
                         })
                     ];
                 case 4:
+                    console.log({
+                        name: name,
+                        email: email,
+                        password: password
+                    });
                     return [
                         4,
                         createUser(name, email, password)
                     ];
                 case 5:
                     _ref1 = _state.sent(), user = _ref1.user, aToken1 = _ref1.aToken;
-                    //-- console.log({user, aToken})
+                    console.log({
+                        user: user,
+                        aToken: aToken1
+                    });
                     return [
                         2,
                         res.send({
@@ -297,7 +307,7 @@ var verifyResetPassword = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //-- console.log("verifying reset/adding password", req.body)
+                    console.log("verifying reset/adding password", req.body);
                     _req_body = req.body, id = _req_body.id, token = _req_body.token;
                     return [
                         4,
@@ -305,6 +315,11 @@ var verifyResetPassword = function(req, res) {
                     ];
                 case 1:
                     _ref = _state.sent(), name = _ref.name, email = _ref.email, password = _ref.password;
+                    console.log({
+                        name: name,
+                        email: email,
+                        password: password
+                    });
                     return [
                         4,
                         User.findOneAndUpdate({
@@ -331,7 +346,10 @@ var verifyResetPassword = function(req, res) {
                     ];
                 case 3:
                     user = _state.sent();
-                    //-- console.log({user, aToken})
+                    console.log({
+                        user: user,
+                        aToken: aToken
+                    });
                     res.send({
                         user: user,
                         aToken: aToken
@@ -349,7 +367,7 @@ var resetPassword = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //-- console.log("resetting password", req.body);
+                    console.log("resetting password", req.body);
                     _req_body = req.body, email = _req_body.email, password = _req_body.password;
                     return [
                         4,
@@ -368,6 +386,9 @@ var resetPassword = function(req, res) {
                     unverifiedUser = _state.sent();
                     //const token = crypto.randomBytes(32).toString("hex");
                     link = "".concat(process.env.CLIENT_URL, "/verify-password/").concat(unverifiedUser.id, "/").concat(unverifiedUser.token);
+                    console.log({
+                        link: link
+                    });
                     return [
                         4,
                         sendMail({
@@ -378,7 +399,7 @@ var resetPassword = function(req, res) {
                     ];
                 case 3:
                     result = _state.sent();
-                    //-- console.log(result);
+                    console.log(result);
                     res.send({
                         user: user,
                         result: result
@@ -410,10 +431,10 @@ var googleLogin = function(req, res) {
                     ];
                 case 1:
                     googleUser = _state.sent();
-                    //-- console.log(googleUser)
+                    console.log(googleUser);
                     if (googleUser.error) throw new AppError(1, 500, "error google");
                     //const ticket = await client.verifyIdToken({idToken: credential, audience: client_id})
-                    ////-- console.log(ticket)
+                    // console.log(ticket)
                     payload = googleUser; //ticket.getPayload()
                     return [
                         4,
@@ -428,7 +449,7 @@ var googleLogin = function(req, res) {
                         4
                     ];
                     //throw new AppError(1, 401, "A user with that email, not logged with google already exists");
-                    //-- console.log( "A user with that email, not logged with google already exists");
+                    console.log("A user with that email, not logged with google already exists");
                     aToken = createTokens(alreadyExistingUser.id, alreadyExistingUser.email).aToken;
                     return [
                         4,
@@ -482,7 +503,10 @@ var googleLogin = function(req, res) {
                     ];
                 case 7:
                     _ref = _state.sent(), user2 = _ref.user, aToken2 = _ref.aToken;
-                    //-- console.log({user, aToken})
+                    console.log({
+                        user: user2,
+                        aToken: aToken2
+                    });
                     res.send({
                         user: user2,
                         aToken: aToken2
@@ -500,6 +524,7 @@ var profileImgUpload = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
+                    console.log(req.files);
                     return [
                         4,
                         saveFile(req.files.image)
@@ -517,7 +542,9 @@ var profileImgUpload = function(req, res) {
                     ];
                 case 2:
                     user = _state.sent();
-                    //-- console.log("profile image updated",{ user})
+                    console.log("profile image updated", {
+                        user: user
+                    });
                     res.send(fileId);
                     return [
                         2
@@ -533,7 +560,9 @@ var getProfile = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.query.id;
-                    //-- console.log("getting user", {id})
+                    console.log("getting user", {
+                        id: id
+                    });
                     if (!id || id == req.user.id.toString()) return [
                         2,
                         res.send(req.user)
@@ -564,7 +593,9 @@ var getUser = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.query.id;
-                    //-- console.log("getting user", {id})
+                    console.log("getting user", {
+                        id: id
+                    });
                     if (!id || id == req.user.id.toString()) return [
                         2,
                         res.send(req.user)
@@ -686,7 +717,7 @@ var getUsers = function(req, res) {
                     _req_query = req.query, search = _req_query.search, index = _req_query.index, offset = _req_query.offset, flt = _req_query.filter;
                     if (!index) index = 0;
                     if (!offset) offset = 20;
-                    //-- console.log("get users query: ", req.query);
+                    console.log("get users query: ", req.query);
                     filter = {
                         _id: {
                             $ne: req.user._id
@@ -706,7 +737,7 @@ var getUsers = function(req, res) {
                             $regex: "(?i)^" + search
                         };
                     }
-                    //-- console.log(filter)
+                    console.log(filter);
                     projection = {
                         name: 1,
                         profileImg: 1,
@@ -762,8 +793,9 @@ var getNotifications = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
+                    console.log(req.query);
                     if (typeof req.query.timestamp == 'string') timestamp = parseInt(req.query.timestamp, 10);
-                    ////-- console.log({timestamp}, req.query)
+                    // console.log({timestamp}, req.query)
                     date = new Date(timestamp);
                     date.setHours(0, 0, 0, 0);
                     return [
@@ -786,15 +818,21 @@ var readNotifications = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //-- console.log(req.body)
+                    console.log(req.body);
                     ids = req.body.ids;
                     newNotifications = req.user.notifications.map(function(not) {
-                        //-- console.log({_id: not._id, ids})
+                        console.log({
+                            _id: not._id,
+                            ids: ids
+                        });
                         if (ids.includes(not._id.toString())) {
-                            //-- console.log("changing read status");
+                            console.log("changing read status");
                             not.status = 'read';
                         }
                         return not;
+                    });
+                    console.log({
+                        newNotifications: newNotifications
                     });
                     return [
                         4,
@@ -820,7 +858,7 @@ var readNotifications = function(req, res) {
 //     const user = await User.findByIdAndUpdate(req.user.id,{
 //         profileImg: fileId
 //     },{new: true})
-//     //-- console.log("profile image updated",{ user})
+//      console.log("profile image updated",{ user})
 //     res.send(fileId)
 // }
 var deleteAccountRequest = function(req, res) {
@@ -895,7 +933,7 @@ var addPasswordToLogin = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    //-- console.log("resetting password", req.body);
+                    console.log("resetting password", req.body);
                     _req_body = req.body, email = _req_body.email, password = _req_body.password;
                     return [
                         4,
@@ -914,6 +952,9 @@ var addPasswordToLogin = function(req, res) {
                     unverifiedUser = _state.sent();
                     //const token = crypto.randomBytes(32).toString("hex");
                     link = "".concat(process.env.CLIENT_URL, "/verify-password/").concat(unverifiedUser.id, "/").concat(unverifiedUser.token);
+                    console.log({
+                        link: link
+                    });
                     return [
                         4,
                         sendMail({
@@ -924,7 +965,7 @@ var addPasswordToLogin = function(req, res) {
                     ];
                 case 3:
                     result = _state.sent();
-                    //-- console.log(result);
+                    console.log(result);
                     res.send({
                         user: user,
                         result: result
@@ -942,6 +983,7 @@ var logout = function(req, res) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
+                    console.log("logging out");
                     return [
                         4,
                         logoutUser(req.user, req.token)

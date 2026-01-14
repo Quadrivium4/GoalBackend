@@ -8,7 +8,7 @@ import { ObjectId } from "mongodb";
 import { addNotification } from "../functions/friends.js";
 
 const updateProgressLikes = async(req: ProtectedReq, res: Response) =>{
-    //-- console.log(req.body)
+     console.log(req.body)
     const {date, id} = req.body;
     const day = await Day.findOneAndUpdate({_id: new ObjectId(id), "history.date": date}, {$push: {"history.$.likes": {userId: req.user.id, profileImg: req.user.profileImg, username: req.user.name}}},{new: true});
     addNotification(day.userId, {
@@ -23,16 +23,16 @@ const updateProgressLikes = async(req: ProtectedReq, res: Response) =>{
         date: Date.now(),
         content: req.user.name + " liked your activity"
     });
-    //-- console.log(day);
+     console.log(day);
     res.send(day);
 }
 const deleteProgressLikes = async(req: ProtectedReq, res: Response) =>{
-    //-- console.log(req.query)
+     console.log(req.query)
     let {timestamp, id} = req.query;
     let date = parseInt(timestamp as string, 10)
-    //-- console.log(date)
+     console.log(date)
     const day = await Day.findOneAndUpdate({_id: new ObjectId(id as string), "history.date": date}, {$pull: {"history.$.likes": {userId: req.user._id.toString()}}},{new: true});
-    //-- console.log(day)
+     console.log(day)
     res.send(day)
 }
 export {

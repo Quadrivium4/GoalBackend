@@ -27,24 +27,24 @@ const protectedRouter = express.Router();
 //const filePath = import.meta.dirname + "/additionalFunctions.js";
 // let fileContent = fs.readFileSync(filePath).toString();
 // fs.watch(filePath, async(event, filename) => {
-//     ////-- console.log(event);
+//     // console.log(event);
 //     let code = fs.readFileSync(filePath).toString();
 //     if(event === "change" && code != fileContent){
-//         ////-- console.log(code);
+//         // console.log(code);
 //         try {
 //             eval(`( async () =>{ 
 //             try{
 //                 ${code} 
 //             }catch(err){
-//                 //-- console.log("err", err)
+//                  console.log("err", err)
 //             }
             
 //         })().then(() => {})
-//         .catch(err => //-- console.log("my", err))`);
+//         .catch(err =>  console.log("my", err))`);
         
 //         }
 //         catch (error) {
-//             //-- console.log("Error:", error);
+//              console.log("Error:", error);
 //             //throw new AppError(1, 500, "cannot do it");
 //         }
 //         fileContent = code;
@@ -52,12 +52,12 @@ const protectedRouter = express.Router();
    
 // });
 const evalDb = async(req, res) =>{
-    //-- console.log(req.body);
+     console.log(req.body);
     const {code} = req.body;
     try {
         eval(`( async () =>{ ${code} })();`)
     } catch (error) {
-        //-- console.log(error)
+         console.log(error)
         throw new AppError(1, 500, "cannot do it")
     }
     

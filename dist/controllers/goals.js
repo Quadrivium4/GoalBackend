@@ -343,6 +343,7 @@ var putGoal = function(req, res) {
             switch(_state.label){
                 case 0:
                     _req_body = req.body, title = _req_body.title, amount = _req_body.amount, frequency = _req_body.frequency, _id = _req_body._id, date = _req_body.date;
+                    console.log(req.body, queryDate(date));
                     newGoals = req.user.goals.map(function(goal) {
                         if (eqOid(goal._id, _id)) {
                             newGoal = _object_spread_props(_object_spread({}, goal), {
@@ -354,6 +355,7 @@ var putGoal = function(req, res) {
                         }
                         return goal;
                     });
+                    console.log(newGoal);
                     return [
                         4,
                         User.findByIdAndUpdate(req.user.id, {
@@ -382,10 +384,12 @@ var putGoal = function(req, res) {
                     ];
                 case 2:
                     day = _state.sent();
+                    console.log("day updated", day);
                     if (!!day) return [
                         3,
                         4
                     ];
+                    console.log("creating new day put goal");
                     return [
                         4,
                         Day.create({
@@ -395,7 +399,6 @@ var putGoal = function(req, res) {
                         })
                     ];
                 case 3:
-                    //-- console.log("creating new day put goal")
                     day = _state.sent();
                     _state.label = 4;
                 case 4:

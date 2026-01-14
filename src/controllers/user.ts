@@ -14,11 +14,11 @@ import { BSON, BSONType, ObjectId } from "mongodb";
 export const GOOGLE_LOGIN = "google-login"
 const client = new OAuth2Client();
 const register = async(req, res) =>{
-    //-- console.log(req.body)
+     console.log(req.body)
     const { name, email, password } = req.body;
     const user = await createUnverifiedUser(name, email, password);
     const link = `${process.env.CLIENT_URL}/verify/${user.id}/${user.token}`;
-    //-- console.log({link})
+     console.log({link})
     await sendMail({
         to: user.email,
         subject: "Goal - confirmation email",
@@ -32,15 +32,15 @@ const register = async(req, res) =>{
 }
 
 // const signInWithGoogle = async (req, res) => {
-//     //-- console.log("logging with google...")
+//      console.log("logging with google...")
 //     const token = extractBearerToken(req);
 //     if (!token) throw new AppError(1, 403, "Invalid Token");
 //     const { user, aToken } = await createOrLoginUserFromGoogle(token);
-//     //-- console.log({user, aToken})
+//      console.log({user, aToken})
 //     res.send({user, aToken});
 // }
 const verify = async (req, res) => {
-    //-- console.log(req.body)
+     console.log(req.body)
     const {id,  token } = req.body;
     const {name, email, password}= await verifyUser(id, token);
 
@@ -50,9 +50,9 @@ const verify = async (req, res) => {
         const newUser = await User.findByIdAndUpdate(alreadyExistingUser.id, {email, tokens: [aToken]},{new: true});
         return res.send({user: newUser, aToken});
     }else{
-            //-- console.log({name, email, password})
+             console.log({name, email, password})
         const { user, aToken } = await createUser(name, email, password);
-        //-- console.log({user, aToken})
+         console.log({user, aToken})
         return res.send({ user, aToken });
     }
 
@@ -65,10 +65,10 @@ const login = async(req, res) =>{
     res.send({ user, aToken });
 }
 const verifyResetPassword = async(req, res)=>{
-    //-- console.log("verifying reset/adding password", req.body)
+     console.log("verifying reset/adding password", req.body)
     const {id,  token } = req.body;
     const {name, email, password}= await verifyUser(id, token);
-    //-- console.log({name, email, password})
+     console.log({name, email, password})
     let user = await User.findOneAndUpdate({email}, {password }, {new: true});
         
     const { aToken } = createTokens(user.id, email);
@@ -78,11 +78,11 @@ const verifyResetPassword = async(req, res)=>{
             tokens: [...user.tokens, aToken]
         }, { new: true });
 
-    //-- console.log({user, aToken})
+     console.log({user, aToken})
     res.send({ user, aToken });
 }
 const resetPassword = async(req, res) =>{
-    //-- console.log("resetting password", req.body);
+     console.log("resetting password", req.body);
     const {email, password} = req.body;
     const user = await User.findOne({email});
     if(!user) throw new AppError(1002,404, "User with that email not found");
@@ -91,7 +91,7 @@ const resetPassword = async(req, res) =>{
 
     //const token = crypto.randomBytes(32).toString("hex");
     const link = `${process.env.CLIENT_URL}/verify-password/${unverifiedUser.id}/${unverifiedUser.token}`;
-    //-- console.log({link})
+     console.log({link})
     let result = await sendMail({
         to: user.email,
         subject: "Goal - Reset password",
@@ -102,22 +102,22 @@ const resetPassword = async(req, res) =>{
             
                 `
     })
-    //-- console.log(result);
+     console.log(result);
     res.send({user, result});
 }
 const googleLogin = async(req, res) =>{
     //const {credential, client_id} = req.body;
     const {token} = req.body;
     const googleUser = await fetch("https://www.googleapis.com/userinfo/v2/me", { headers: { Authorization: `Bearer ${token}` }}).then(res => res.json());
-    //-- console.log(googleUser)
+     console.log(googleUser)
     if(googleUser.error) throw new AppError(1, 500, "error google")
     //const ticket = await client.verifyIdToken({idToken: credential, audience: client_id})
-    ////-- console.log(ticket)
+    // console.log(ticket)
     const payload = googleUser;//ticket.getPayload()
     let alreadyExistingUser = await User.findOne({email: payload.email});
     if (alreadyExistingUser && !alreadyExistingUser.googleLogin) {
         //throw new AppError(1, 401, "A user with that email, not logged with google already exists");
-        //-- console.log( "A user with that email, not logged with google already exists");
+         console.log( "A user with that email, not logged with google already exists");
          const {aToken} = createTokens(alreadyExistingUser.id, alreadyExistingUser.email);
         let user = await User.findByIdAndUpdate(alreadyExistingUser.id,
         {
@@ -136,24 +136,24 @@ const googleLogin = async(req, res) =>{
     }
     
     const { user, aToken } = await createUser(payload.name, payload.email, "", true);
-    //-- console.log({user, aToken})
+     console.log({user, aToken})
     res.send({ user, aToken });
 }
 
 const profileImgUpload = async(req, res) =>{
-    //-- console.log(req.files)
+     console.log(req.files)
     const fileId = await saveFile(req.files.image);
     if(req.user.profileImg) deleteFile(req.user.profileImg);
     const user = await User.findByIdAndUpdate(req.user.id,{
         profileImg: fileId
     },{new: true})
-    //-- console.log("profile image updated",{ user})
+     console.log("profile image updated",{ user})
     res.send(fileId)
 }
 
 const getProfile = async(req, res) =>{
     const {id} = req.query;
-    //-- console.log("getting user", {id})
+     console.log("getting user", {id})
     if(!id || id == req.user.id.toString()) return res.send(req.user);
     if(!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
     const user = await User.findById(id);
@@ -166,7 +166,7 @@ const getProfile = async(req, res) =>{
 }
 const getUser = async(req: ProtectedReq, res) =>{
     const {id} = req.query;
-    //-- console.log("getting user", {id})
+     console.log("getting user", {id})
     if(!id || id == req.user.id.toString()) return res.send(req.user);
     if(!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
     const user = await User.findById(id);
@@ -216,7 +216,7 @@ const getUsers = async(req: ProtectedReq, res) =>{
     let {search, index, offset, filter: flt} = req.query as any;
     if(!index) index = 0;
     if(!offset) offset = 20;
-    //-- console.log("get users query: ", req.query);
+     console.log("get users query: ", req.query);
     let filter: any = {
         _id: {$ne: req.user._id}
     };
@@ -231,7 +231,7 @@ const getUsers = async(req: ProtectedReq, res) =>{
 
         
     }
-    //-- console.log(filter)
+     console.log(filter)
     let projection = {
         name: 1,
         profileImg: 1,
@@ -259,10 +259,10 @@ const updateUser = async(req, res) =>{
 
 }
 const getNotifications = async(req: ProtectedReq<{},{} ,{} , {timestamp: number}>, res) =>{
-    //-- console.log(req.query)
+     console.log(req.query)
     let timestamp: number;
     if(typeof req.query.timestamp == 'string' ) timestamp = parseInt(req.query.timestamp, 10);
-    ////-- console.log({timestamp}, req.query)
+    // console.log({timestamp}, req.query)
     const date = new Date(timestamp);
     date.setHours(0,0,0,0);
 
@@ -273,17 +273,17 @@ const getNotifications = async(req: ProtectedReq<{},{} ,{} , {timestamp: number}
 
 }
 const readNotifications = async(req: ProtectedReq, res) =>{
-    //-- console.log(req.body)
+     console.log(req.body)
     const {ids} = req.body;
     const newNotifications = req.user.notifications.map(not =>{
-        //-- console.log({_id: not._id, ids})
+         console.log({_id: not._id, ids})
         if(ids.includes(not._id.toString())){
-            //-- console.log("changing read status");
+             console.log("changing read status");
             not.status = 'read';
         }
         return not
     })
-    //-- console.log({newNotifications});
+     console.log({newNotifications});
     const user = await User.findByIdAndUpdate(req.user.id, {notifications: newNotifications }, {new: true});
     res.send(user.notifications)
 
@@ -294,7 +294,7 @@ const readNotifications = async(req: ProtectedReq, res) =>{
 //     const user = await User.findByIdAndUpdate(req.user.id,{
 //         profileImg: fileId
 //     },{new: true})
-//     //-- console.log("profile image updated",{ user})
+//      console.log("profile image updated",{ user})
 //     res.send(fileId)
 // }
 const deleteAccountRequest = async(req, res) =>{
@@ -320,7 +320,7 @@ const deleteAccount = async(req, res) =>{
     res.send(deletedUser)
 }
 const addPasswordToLogin = async(req, res) =>{
-    //-- console.log("resetting password", req.body);
+     console.log("resetting password", req.body);
     const {email, password} = req.body;
     const user = await User.findOne({email});
     if(!user) throw new AppError(1002,404, "User with that email not found");
@@ -329,7 +329,7 @@ const addPasswordToLogin = async(req, res) =>{
 
     //const token = crypto.randomBytes(32).toString("hex");
     const link = `${process.env.CLIENT_URL}/verify-password/${unverifiedUser.id}/${unverifiedUser.token}`;
-    //-- console.log({link})
+     console.log({link})
     let result = await sendMail({
         to: user.email,
         subject: "Goal - Change Login Method",
@@ -339,11 +339,11 @@ const addPasswordToLogin = async(req, res) =>{
                 <a href="${link}">Change login method</a>
                 `
     })
-    //-- console.log(result);
+     console.log(result);
     res.send({user, result});
 }
 const logout = async(req, res) =>{
-    //-- console.log("logging out");
+     console.log("logging out");
     const user = await logoutUser(req.user, req.token);
     res.send({msg: "Successfully logged out!"});
 }

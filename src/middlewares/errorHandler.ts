@@ -51,9 +51,9 @@ function logger([...msg], options:any = {}) {
 
 }
 const errorHandler = async (err, req, res, next) => {
-    //-- console.log("error handler")
+     console.log("error handler")
     if (err instanceof AppError) {
-        ////-- console.log("My Error", err.stack)
+        // console.log("My Error", err.stack)
         logger(["---- Is Not Your Fault ----", {
             type: err.constructor.name,
             statusCode: err.statusCode,

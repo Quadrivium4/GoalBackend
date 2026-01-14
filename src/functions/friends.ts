@@ -1,9 +1,9 @@
 import User, { TNotification, TUser } from "../models/user.js"
 import { ObjectId } from "mongodb";
-const getUserFriends = async(user: TUser) =>{
-    const friends = await User.find({id: {$in: user.friends}});
-    return friends;
-}
+// const getUserFriends = async(user: TUser) =>{
+//     const friends = await User.find({id: {$in: user.friends}});
+//     return friends;
+// }
 const createNotification = (part: Omit<TNotification, "_id">): TNotification => ({
     ...part,
     _id: new ObjectId().toHexString()
@@ -26,14 +26,14 @@ const deleteRequestsNotification = (notifications: TNotification[], requestUserI
     return newNotifications
 }
 const removeRequestAndNotification = async(requestingId: string, receivingId: string) =>{
-    //-- console.log({requestingId, receivingId})
+     console.log({requestingId, receivingId})
     const friend = await User.findByIdAndUpdate(requestingId, {
         $pull: {
             outgoingFriendRequests: receivingId
         },
     }, { new: true })
 
-    //-- console.log(typeof requestingId)
+     console.log(typeof requestingId)
     const user = await User.findByIdAndUpdate(receivingId, {
         $pull: {
             incomingFriendRequests: requestingId,
@@ -43,22 +43,22 @@ const removeRequestAndNotification = async(requestingId: string, receivingId: st
             }
         }
     }, { new: true });
-    //-- console.log("not length", user.notifications.length)
+     console.log("not length", user.notifications.length)
     return user;
 }
 const deleteOldNotifications = async(userId: string, date: number | Date) =>{
-    ////-- console.log("deleting old notifications");
+    // console.log("deleting old notifications");
     date = new Date(date);
     date.setHours(0,0,0,0);
     // const user = await User.find({"notifications.date": {$lte: date.getTime()}});
-    // //-- console.log(user, date.getTime())
-    //-- console.log(date.getTime(), "deleting notifications");
+    //  console.log(user, date.getTime())
+     console.log(date.getTime(), "deleting notifications");
     const user =  await User.findByIdAndUpdate(userId,{$pull: {notifications: { date: {$lte: date.getTime()}, status: "read", type: {$nin: ["incoming request", "outgoing request"]}}}},{new: true});
 
     return user;
 }
 export {
-    getUserFriends,
+   // getUserFriends,
     addNotification,
     deleteOldNotifications,
     deleteRequestsNotification,

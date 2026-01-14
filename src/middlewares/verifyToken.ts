@@ -7,10 +7,10 @@ import AppError from "../utils/appError.js";
 const verifyToken = async(req, res, next) =>{
     const token = extractBearerToken(req);
     if(!token) throw new AppError(1, 403, "Invalid Token");
-    //-- console.log({token})
+     console.log({token})
     try {
         const {id, email}= jwt.verify(token, process.env.JWT_A_TOKEN_KEY) as  {id: string, email: string} ;
-        //-- console.log({id, email});
+         console.log({id, email});
         const user = await User.findById(id);
         if (!user) throw new AppError(1, 403, "Invalid Token");
         req.user = user;
