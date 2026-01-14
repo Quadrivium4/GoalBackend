@@ -15,6 +15,7 @@ oAuth2Client.setCredentials({
     refresh_token: process.env.GMAIL_REFRESH_TOKEN
 });
 const sendMail = async ({to, subject, body, attachments = []}) => {
+  console.log("Sending mail", process.env.MAIL_PSW)
     const transporter  = nodemailer.createTransport({
     host: 'authsmtp.securemail.pro',
     port: 587,
