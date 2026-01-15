@@ -25,7 +25,7 @@ const deleteRequestsNotification = (notifications: TNotification[], requestUserI
     }
     return newNotifications
 }
-const removeRequestAndNotification = async(requestingId: string, receivingId: string) =>{
+const removeRequestAndNotification = async(requestingId: string, receivingId: string):Promise<TUser> =>{
      console.log({requestingId, receivingId})
     const friend = await User.findByIdAndUpdate(requestingId, {
         $pull: {

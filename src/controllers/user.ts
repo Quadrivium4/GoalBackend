@@ -175,6 +175,7 @@ const getUser = async(req: ProtectedReq, res) =>{
         _id: user.id,
         name: user.name,
         profileImg: user.profileImg,
+        bio: user.bio,
         goals: user.goals,
         profileType: user.profileType
     })

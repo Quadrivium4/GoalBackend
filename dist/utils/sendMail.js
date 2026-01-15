@@ -133,10 +133,11 @@ var sendMail = function(param) {
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
+                    console.log("Sending mail", process.env.MAIL_PSW);
                     transporter = nodemailer.createTransport({
                         host: 'authsmtp.securemail.pro',
-                        port: 587,
-                        secure: false,
+                        port: 465,
+                        secure: true,
                         auth: {
                             user: 'support@goalapp.it',
                             pass: process.env.MAIL_PSW // your password
