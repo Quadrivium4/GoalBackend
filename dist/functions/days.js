@@ -1,4 +1,4 @@
-import { getLastMonday } from "../controllers/days.js";
+import { getLastMonday } from "../controllers/progress.js";
 import Day from "../models/day.js";
 var queryGoalDays = function(goal, userId) {
     var fromDate = goal.frequency == "daily" ? new Date() : getLastMonday(new Date());

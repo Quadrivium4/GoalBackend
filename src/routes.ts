@@ -1,16 +1,16 @@
 import express, {Request, Response as ExpressResponse} from "express"
 import { tryCatch } from "./utils.js";
-import { addPasswordToLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { addPasswordToLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
-import { deleteProgress, getDays, getStats, postProgress, updateProgress } from "./controllers/days.js";
-import {acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest } from "./controllers/friends.js"
+import {acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest, getLazyProgress } from "./controllers/friends.js"
 import { TUser } from "./models/user.js";
 import { deleteProgressLikes, updateProgressLikes } from "./controllers/likes.js";
 import { ParamsDictionary, Query, Request as CoreRequest } from "express-serve-static-core";
 import AppError from "./utils/appError.js";
 import fs from "fs";
 import { ObjectId } from "mongodb";
+import { deleteProgress, getProgresses, getStats, postProgress, updateProgress } from "./controllers/progress.js";
 export interface ProtectedReq<
         P = ParamsDictionary,
         ResBody = any,
@@ -90,10 +90,11 @@ protectedRouter
     .delete("/goals", tryCatch(deleteGoal))
     .put("/goal-amount", tryCatch(putGoalAmount))
 protectedRouter
+    .get("/progress", tryCatch(getProgresses))
     .post("/progress", tryCatch(postProgress))
     .put("/progress", tryCatch(updateProgress))
     .delete("/progress", tryCatch(deleteProgress))
-protectedRouter.get("/days", tryCatch(getDays))
+//protectedRouter.get("/days", tryCatch(getDays))
 protectedRouter.get("/stats/:userId?", tryCatch(getStats))
 
 protectedRouter
@@ -104,6 +105,7 @@ protectedRouter.get("/notifications", tryCatch(getNotifications));
 protectedRouter.post("/notifications", tryCatch(readNotifications));
 
 protectedRouter.get("/lazy-friends", tryCatch(getLazyFriends))
+protectedRouter.get("/lazy-progress", tryCatch(getLazyProgress))
 protectedRouter.get("/friend/:id?", tryCatch(getFriends))
 protectedRouter.post("/send-friend-request/:id", tryCatch(sendFriendRequest))
 protectedRouter.post("/accept-friend-request/:id", tryCatch(acceptFriendRequest))
@@ -116,6 +118,10 @@ protectedRouter.delete("/unfollow/:id", tryCatch(unfollow))
 protectedRouter.route("/user/upload-profile-image")
     .post(tryCatch(profileImgUpload))
 
+protectedRouter.route("/user/update-img")
+    .post(tryCatch(profileImgUpdate))
+protectedRouter.route("/cloudinary-signature")
+    .get(tryCatch(generateCloudinarySignature))
 //publicRouter.get("/file/:id", tryCatch(downloadFile))
 
 

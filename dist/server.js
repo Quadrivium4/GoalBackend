@@ -128,6 +128,7 @@ import Day from "./models/day.js";
 import User from "./models/user.js";
 import fileUpload from "express-fileupload";
 import errorHandler from "./middlewares/errorHandler.js";
+import Progress from "./models/progress.js";
 var app = express();
 var port = process.env.PORT;
 app.use(express.json());
@@ -153,6 +154,7 @@ app.listen(port, function() {
                     ];
                 case 1:
                     _state.sent();
+                    // await createProgresses()
                     //await updateUsersDb()
                     console.log("Server listening on port ".concat(port));
                     return [
@@ -174,6 +176,50 @@ app.listen(port, function() {
         });
     })();
 });
+var createProgresses = function() {
+    return _async_to_generator(function() {
+        var days, promises, i, day, j, p, newP, result;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    return [
+                        4,
+                        Day.find({})
+                    ];
+                case 1:
+                    days = _state.sent();
+                    promises = [];
+                    for(i = 0; i < days.length; i++){
+                        day = days[i];
+                        for(j = 0; j < day.history.length; j++){
+                            p = day.history[j];
+                            newP = {
+                                date: p.date,
+                                userId: day.userId,
+                                amount: p.progress,
+                                notes: p.notes,
+                                likes: p.likes,
+                                likesCount: p.likes.length,
+                                goalId: day.goal._id.toString(),
+                                goalAmount: day.goal.amount
+                            };
+                            promises.push(Progress.create(newP));
+                        }
+                    }
+                    return [
+                        4,
+                        Promise.all(promises)
+                    ];
+                case 2:
+                    result = _state.sent();
+                    console.log("Progresses created");
+                    return [
+                        2
+                    ];
+            }
+        });
+    })();
+};
 var updateDaysDb = function() {
     return _async_to_generator(function() {
         var days, promises;

@@ -6,8 +6,9 @@ import AppError from "../utils/appError.js";
 import express, { Express, Request, Response } from "express";
 import { addNotification, deleteRequestsNotification,  removeRequestAndNotification } from "../functions/friends.js";
 import { dayInMilliseconds } from "../utils.js";
-import { getLastMonday, getLastSunday } from "./days.js";
 import { ProtectedReq } from "../routes.js";
+import { getLastMonday } from "./progress.js";
+import Progress from "../models/progress.js";
 const week = 7 * dayInMilliseconds
 const aggregateFriendDays = (userId: string, date: number,  skip: number, limit: number):mongoose.PipelineStage[] => [
   {
@@ -17,10 +18,19 @@ const aggregateFriendDays = (userId: string, date: number,  skip: number, limit:
   },
   {
     $unwind: "$following",
-  },
+  }, {
+    $lookup: {
+       from: "progresses",
+        localField: "following",
+        foreignField: "userId",
+        as: "goals",
+        pipeline: []
+    }
+
+  }, 
   {
     $lookup: {
-      from: "days",
+      from: "progresses",
       localField: "following",
       foreignField: "userId",
       as: "goals",
@@ -51,16 +61,80 @@ const aggregateFriendDays = (userId: string, date: number,  skip: number, limit:
           },
         },
         {$group: {
-          "_id": "$goal._id",
-          "title": {$first: "$goal.title"},
-          "type": {$first: "$goal.type"},
-          "amount": {$first: "$goal.amount"},
+          "_id": "$goalId",
+         
           "date": {$first: "$date"},
           "history": {$push: "$$ROOT"},
           "userId": {$first: "$userId"}
         }
       },
       ],
+    },
+  },
+  {
+    $project:
+      {
+        _id: {
+          $toObjectId: "$following",
+        },
+        goals: 1,
+      },
+  },
+  {
+    $lookup:
+      {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "user",
+      },
+  },
+  {
+    $unwind: "$user",
+  },
+  {
+    $project: {
+      _id: 1,
+      name: "$user.name",
+      goals: 1,
+      profileImg: "$user.profileImg",
+      goalsInfo: "$user.goals"
+    },
+  },
+]
+
+const aggregateFriendDays2 = (userId: string, date: number,  skip: number, limit: number):mongoose.PipelineStage[] => [
+  {
+    $match: {
+      _id: new ObjectId(userId),
+    },
+  },
+  {
+    $unwind: "$following",
+  }, 
+  {
+    $lookup: {
+      from: "progresses",
+      localField: "following",
+      foreignField: "userId",
+      as: "goals",
+      pipeline: [
+        {
+          $sort: {
+            date: -1
+          },
+         
+        },{
+           $skip: skip,
+         
+        },{
+   
+          $limit: limit
+        }
+         
+        ],
+       
+        
     },
   },
   {
@@ -130,6 +204,19 @@ const getLazyFriends = async(req, res) =>{
      console.log("hey", response)
     res.send(response)
 }
+const getLazyProgress = async(req, res) =>{
+    const offset = 20;
+    const {index, timestamp} = req.query;
+    const date = new Date(parseInt(timestamp, 10));
+    date.setHours(0,0,0,0);
+
+     console.log({offset, index, date})
+    //const friends = await getUserFriends(req.user);
+    //const response = await Progress.find({userId: {$in: req.user.following || []}}).sort({date: -1}).skip(index * offset).limit(offset);
+    const response = await User.aggregate(aggregateFriendDays2(req.user.id,date.getTime(), index * offset, offset));
+     console.log("hey", response)
+    res.send(response)
+}
 const getFriends = async (req, res) => {
     const {id} = req.params;
     if(id){
@@ -149,27 +236,11 @@ const getFriends = async (req, res) => {
             User.find({_id: {$in: req.user.followers}}), 
             User.find({_id: {$in: req.user.incomingFriendRequests}}), 
             User.find({_id: {$in: req.user.outgoingFriendRequests}}), 
-            Day.find({userId: {$in: req.user.following}}).sort({date: -1}).limit(20)
+            Day.find({userId: {$in: req.user.following }}).sort({date: -1}).limit(20)
         ];
-        // let friendsPromises = req.user.friends.map(friend =>{
-        //     return User.findById(friend);
-        // })
-        // promises.push(fr)
-        // let incomingFriendsPromises = req.user.incomingFriendRequests.map(friend =>{
-        //     return User.findById(friend);
-        // })
 
-        // let outgoingFriendsPromises = req.user.outgoingFriendRequests.map(friend =>{
-        //     return User.findById(friend);
-        // })
-        // let friendGoalsPromises = req.user.friends.map(friend =>{
-
-        // })
-        // let [friends, incomingFriendRequests, outgoingFriendRequests] = await Promise.all([Promise.all(friendsPromises),Promise.all(incomingFriendsPromises), Promise.all(outgoingFriendsPromises)]);
         let [followers, incomingFriendRequests, outgoingFriendRequests, friendDays] = await Promise.all(promises);
         
-        
-        // console.log({friends, incomingFriendRequests, outgoingFriendRequests, friendDays})
         return res.send({followers, incomingFriendRequests, outgoingFriendRequests, friendDays})
     }
     
@@ -325,6 +396,7 @@ export  {
     sendFriendRequest,
     cancelFriendRequest,
     ignoreFriendRequest,
+    getLazyProgress,
     deleteFollower,
     unfollow
 }

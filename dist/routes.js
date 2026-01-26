@@ -120,13 +120,13 @@ function _ts_generator(thisArg, body) {
 }
 import express from "express";
 import { tryCatch } from "./utils.js";
-import { addPasswordToLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { addPasswordToLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
-import { deleteProgress, getDays, getStats, postProgress, updateProgress } from "./controllers/days.js";
-import { acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest } from "./controllers/friends.js";
+import { acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest, getLazyProgress } from "./controllers/friends.js";
 import { deleteProgressLikes, updateProgressLikes } from "./controllers/likes.js";
 import AppError from "./utils/appError.js";
+import { deleteProgress, getProgresses, getStats, postProgress, updateProgress } from "./controllers/progress.js";
 var publicRouter = express.Router();
 var protectedRouter = express.Router();
 //const filePath = import.meta.dirname + "/additionalFunctions.js";
@@ -189,13 +189,14 @@ protectedRouter.use(tryCatch(verifyToken));
 protectedRouter.get("/profile", tryCatch(getProfile));
 protectedRouter.get("/user", tryCatch(getUser)).put("/user", tryCatch(editUser)).delete("/user", tryCatch(deleteAccountRequest)).get("/users", tryCatch(getUsers)).get("/logout", tryCatch(logout)).post("/change-email", tryCatch(changeEmail));
 protectedRouter.post("/goals", tryCatch(postGoal)).put("/goals", tryCatch(putGoal)).delete("/goals", tryCatch(deleteGoal)).put("/goal-amount", tryCatch(putGoalAmount));
-protectedRouter.post("/progress", tryCatch(postProgress)).put("/progress", tryCatch(updateProgress)).delete("/progress", tryCatch(deleteProgress));
-protectedRouter.get("/days", tryCatch(getDays));
+protectedRouter.get("/progress", tryCatch(getProgresses)).post("/progress", tryCatch(postProgress)).put("/progress", tryCatch(updateProgress)).delete("/progress", tryCatch(deleteProgress));
+//protectedRouter.get("/days", tryCatch(getDays))
 protectedRouter.get("/stats/:userId?", tryCatch(getStats));
 protectedRouter.post("/likes", tryCatch(updateProgressLikes)).delete("/likes", tryCatch(deleteProgressLikes));
 protectedRouter.get("/notifications", tryCatch(getNotifications));
 protectedRouter.post("/notifications", tryCatch(readNotifications));
 protectedRouter.get("/lazy-friends", tryCatch(getLazyFriends));
+protectedRouter.get("/lazy-progress", tryCatch(getLazyProgress));
 protectedRouter.get("/friend/:id?", tryCatch(getFriends));
 protectedRouter.post("/send-friend-request/:id", tryCatch(sendFriendRequest));
 protectedRouter.post("/accept-friend-request/:id", tryCatch(acceptFriendRequest));
@@ -204,5 +205,7 @@ protectedRouter.delete("/ignore-friend-request/:id", tryCatch(ignoreFriendReques
 protectedRouter.delete("/delete-friend/:id", tryCatch(deleteFollower));
 protectedRouter.delete("/unfollow/:id", tryCatch(unfollow));
 protectedRouter.route("/user/upload-profile-image").post(tryCatch(profileImgUpload));
+protectedRouter.route("/user/update-img").post(tryCatch(profileImgUpdate));
+protectedRouter.route("/cloudinary-signature").get(tryCatch(generateCloudinarySignature));
 //publicRouter.get("/file/:id", tryCatch(downloadFile))
 export { publicRouter, protectedRouter };

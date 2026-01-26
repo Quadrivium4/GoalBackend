@@ -147,12 +147,15 @@ import sendMail from "../utils/sendMail.js";
 import { comparePassword, createRandomToken, createTokens, validateEmail } from "../utils.js";
 import User from "../models/user.js";
 import { createUnverifiedUser, createUser, verifyUser, findUser, deleteUser, logoutUser, createResetPasswordUser } from "../functions/user.js";
-import { deleteFile, saveFile } from "../utils/files.js";
+import { deleteFile, replaceFile } from "../utils/files.js";
 import { OAuth2Client } from "google-auth-library";
 import AppError from "../utils/appError.js";
 import { isValidObjectId } from "mongoose";
 import { deleteOldNotifications } from "../functions/friends.js";
 import { ObjectId } from "mongodb";
+import { v2 as cloudinary } from "cloudinary";
+import "dotenv";
+import Progress from "../models/progress.js";
 export var GOOGLE_LOGIN = "google-login";
 var client = new OAuth2Client();
 var register = function(req, res) {
@@ -525,13 +528,25 @@ var profileImgUpload = function(req, res) {
             switch(_state.label){
                 case 0:
                     console.log(req.files);
+                    if (!req.user.profileImg) return [
+                        3,
+                        2
+                    ];
                     return [
                         4,
-                        saveFile(req.files.image)
+                        deleteFile(req.user.profileImg)
                     ];
                 case 1:
+                    _state.sent();
+                    _state.label = 2;
+                case 2:
+                    return [
+                        4,
+                        replaceFile(req.files.image, req.user.profileImg)
+                    ];
+                case 3:
                     fileId = _state.sent();
-                    if (req.user.profileImg) deleteFile(req.user.profileImg);
+                    fileId.lastModified = Date.now();
                     return [
                         4,
                         User.findByIdAndUpdate(req.user.id, {
@@ -540,12 +555,62 @@ var profileImgUpload = function(req, res) {
                             new: true
                         })
                     ];
-                case 2:
+                case 4:
                     user = _state.sent();
                     console.log("profile image updated", {
                         user: user
                     });
                     res.send(fileId);
+                    return [
+                        2
+                    ];
+            }
+        });
+    })();
+};
+var profileImgUpdate = function(req, res) {
+    return _async_to_generator(function() {
+        var _req_body, name, public_id, url, file, user, updatedProgressesLikes;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    _req_body = req.body, name = _req_body.name, public_id = _req_body.public_id, url = _req_body.url;
+                    file = {
+                        name: name,
+                        public_id: public_id,
+                        url: url,
+                        lastModified: Date.now()
+                    };
+                    console.log({
+                        file: file
+                    });
+                    return [
+                        4,
+                        User.findByIdAndUpdate(req.user.id, {
+                            profileImg: file
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 1:
+                    user = _state.sent();
+                    if (req.user.profileImg) {
+                        deleteFile(req.user.profileImg);
+                    }
+                    return [
+                        4,
+                        Progress.updateMany({
+                            "likes.userId": req.user.id.toString()
+                        }, {
+                            $set: {
+                                "likes.$.profileImg": file
+                            }
+                        })
+                    ];
+                case 2:
+                    updatedProgressesLikes = _state.sent();
+                    //console.log("profile image updated",{ user})
+                    res.send(file);
                     return [
                         2
                     ];
@@ -711,7 +776,7 @@ var arrayToOids = function(array) {
 };
 var getUsers = function(req, res) {
     return _async_to_generator(function() {
-        var _req_query, search, index, offset, flt, filter, projection, users;
+        var _req_query, search, index, offset, flt, filter, followers, following, projection, users;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -725,12 +790,14 @@ var getUsers = function(req, res) {
                         }
                     };
                     if (flt === "followers") {
+                        followers = req.user.followers || [];
                         filter._id = {
-                            $in: arrayToOids(req.user.followers)
+                            $in: arrayToOids(followers)
                         };
                     } else if (flt === "following") {
+                        following = req.user.following || [];
                         filter._id = {
-                            $in: arrayToOids(req.user.following)
+                            $in: arrayToOids(following)
                         };
                     }
                     if (search) {
@@ -1001,4 +1068,37 @@ var logout = function(req, res) {
         });
     })();
 };
-export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile };
+var generateCloudinarySignature = function(req, res) {
+    return _async_to_generator(function() {
+        var paramsToSign, signature;
+        return _ts_generator(this, function(_state) {
+            cloudinary.config({
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET
+            });
+            // Every signature is parametrized for the specific upload needed
+            paramsToSign = {
+                timestamp: Math.floor(new Date().getTime() / 1000),
+                invalidate: true,
+                overwrite: true
+            };
+            if (req.user.profileImg.public_id) {
+                paramsToSign.public_id = req.user.profileImg.public_id;
+            }
+            // Call the Cloudinary SDK to sign the parameters
+            signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
+            // All of the following properties are needed on the frontend to perform the upload
+            res.send({
+                signature: signature,
+                apiKey: process.env.CLOUDINARY_API_KEY,
+                cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+                timestamp: paramsToSign.timestamp
+            });
+            return [
+                2
+            ];
+        });
+    })();
+};
+export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, profileImgUpdate, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile, generateCloudinarySignature };

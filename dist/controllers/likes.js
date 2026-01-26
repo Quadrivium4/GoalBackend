@@ -118,37 +118,38 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
-import Day from "../models/day.js";
-import { ObjectId } from "mongodb";
 import { addNotification } from "../functions/friends.js";
+import Progress from "../models/progress.js";
 var updateProgressLikes = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, date, id, day;
+        var id, like, progress;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
                     console.log(req.body);
-                    _req_body = req.body, date = _req_body.date, id = _req_body.id;
+                    id = req.body.id;
+                    like = {
+                        userId: req.user.id,
+                        progressId: id,
+                        profileImg: req.user.profileImg,
+                        username: req.user.name
+                    };
                     return [
                         4,
-                        Day.findOneAndUpdate({
-                            _id: new ObjectId(id),
-                            "history.date": date
-                        }, {
+                        Progress.findByIdAndUpdate(id, {
+                            $inc: {
+                                likesCount: 1
+                            },
                             $push: {
-                                "history.$.likes": {
-                                    userId: req.user.id,
-                                    profileImg: req.user.profileImg,
-                                    username: req.user.name
-                                }
+                                likes: like
                             }
                         }, {
                             new: true
                         })
                     ];
                 case 1:
-                    day = _state.sent();
-                    addNotification(day.userId, {
+                    progress = _state.sent();
+                    addNotification(progress.userId, {
                         type: "like",
                         from: {
                             profileImg: req.user.profileImg,
@@ -159,8 +160,10 @@ var updateProgressLikes = function(req, res) {
                         date: Date.now(),
                         content: req.user.name + " liked your activity"
                     });
-                    console.log(day);
-                    res.send(day);
+                    console.log({
+                        progress: progress
+                    });
+                    res.send(progress);
                     return [
                         2
                     ];
@@ -180,14 +183,14 @@ var deleteProgressLikes = function(req, res) {
                     console.log(date);
                     return [
                         4,
-                        Day.findOneAndUpdate({
-                            _id: new ObjectId(id),
-                            "history.date": date
-                        }, {
+                        Progress.findByIdAndUpdate(id, {
                             $pull: {
-                                "history.$.likes": {
+                                likes: {
                                     userId: req.user._id.toString()
                                 }
+                            },
+                            $inc: {
+                                likesCount: -1
                             }
                         }, {
                             new: true

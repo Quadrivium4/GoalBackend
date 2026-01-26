@@ -2,7 +2,7 @@ import sendMail from "../utils/sendMail.js"
 import { comparePassword, createRandomToken, createTokens, extractBearerToken, validateEmail } from "../utils.js";
 import User from "../models/user.js";
 import { createUnverifiedUser, createUser, verifyUser, findUser, deleteUser, logoutUser, createResetPasswordUser } from "../functions/user.js";
-import { deleteFile, saveFile } from "../utils/files.js";
+import { deleteFile, replaceFile, saveFile } from "../utils/files.js";
 import { OAuth2Client } from "google-auth-library";
 import AppError from "../utils/appError.js";
 import crypto from "crypto";
@@ -10,6 +10,9 @@ import { isValidObjectId } from "mongoose";
 import { deleteOldNotifications } from "../functions/friends.js";
 import { ProtectedReq } from "../routes.js";
 import { BSON, BSONType, ObjectId } from "mongodb";
+import {v2 as cloudinary} from "cloudinary";
+import "dotenv"
+import Progress from "../models/progress.js";
 
 export const GOOGLE_LOGIN = "google-login"
 const client = new OAuth2Client();
@@ -142,14 +145,32 @@ const googleLogin = async(req, res) =>{
 
 const profileImgUpload = async(req, res) =>{
      console.log(req.files)
-    const fileId = await saveFile(req.files.image);
-    if(req.user.profileImg) deleteFile(req.user.profileImg);
+    if(req.user.profileImg) await deleteFile(req.user.profileImg);
+    const fileId = await replaceFile(req.files.image, req.user.profileImg);
+    fileId.lastModified = Date.now();
     const user = await User.findByIdAndUpdate(req.user.id,{
         profileImg: fileId
     },{new: true})
      console.log("profile image updated",{ user})
     res.send(fileId)
 }
+const profileImgUpdate = async(req, res) =>{
+    const {name, public_id, url} = req.body;
+    const file = {
+        name, public_id, url, lastModified: Date.now()
+    }
+    console.log({file})
+    const user = await User.findByIdAndUpdate(req.user.id,{
+        profileImg: file
+    },{new: true});
+    if(req.user.profileImg){
+         deleteFile(req.user.profileImg)
+    }
+    const updatedProgressesLikes = await Progress.updateMany({"likes.userId": req.user.id.toString()}, {$set: {"likes.$.profileImg": file}})
+     //console.log("profile image updated",{ user})
+    res.send(file)
+}
+
 
 const getProfile = async(req, res) =>{
     const {id} = req.query;
@@ -222,9 +243,11 @@ const getUsers = async(req: ProtectedReq, res) =>{
         _id: {$ne: req.user._id}
     };
     if(flt === "followers"){
-        filter._id = {$in: arrayToOids(req.user.followers)}
+        let followers = req.user.followers || [];
+        filter._id = {$in: arrayToOids(followers)}
     }else if(flt === "following"){
-        filter._id = {$in: arrayToOids(req.user.following)}
+        let following = req.user.following || [];
+        filter._id = {$in: arrayToOids(following)}
     }
 
     if(search){
@@ -348,6 +371,39 @@ const logout = async(req, res) =>{
     const user = await logoutUser(req.user, req.token);
     res.send({msg: "Successfully logged out!"});
 }
+const generateCloudinarySignature = async(req, res) =>{
+    cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  // Every signature is parametrized for the specific upload needed
+  const paramsToSign: any= {
+    timestamp: Math.floor(new Date().getTime() / 1000),
+    invalidate: true,
+    overwrite: true
+   // folder: "ProfileImages",  // Unix timestamp in seconds
+    
+  };
+  if(req.user.profileImg.public_id){
+    paramsToSign.public_id = req.user.profileImg.public_id;
+  }
+  // Call the Cloudinary SDK to sign the parameters
+  const signature = cloudinary.utils.api_sign_request(
+    paramsToSign,
+    process.env.CLOUDINARY_API_SECRET,
+  );
+
+  // All of the following properties are needed on the frontend to perform the upload
+  res.send({
+    signature: signature,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    timestamp: paramsToSign.timestamp,
+    //folder: paramsToSign.folder,
+  })
+}
 export {
     register,
     resetPassword,
@@ -363,10 +419,12 @@ export {
     logoutUser,
     verify,
     profileImgUpload,
+    profileImgUpdate,
     googleLogin,
     changeEmail,
     editUser,
     getNotifications,
     readNotifications,
-    getProfile
+    getProfile,
+    generateCloudinarySignature
 }

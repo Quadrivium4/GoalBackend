@@ -1,4 +1,5 @@
-import { getLastMonday } from "../controllers/days.js";
+
+import { getLastMonday } from "../controllers/progress.js";
 import Day from "../models/day.js";
 import { TGoal } from "../models/user.js";
 

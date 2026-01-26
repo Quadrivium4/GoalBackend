@@ -170,115 +170,153 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
-import { queryDate, queryWeek } from "../functions/days.js";
-import Day from "../models/day.js";
 import User from "../models/user.js";
-import { ObjectId } from "mongodb";
-import { eqOid } from "../utils.js";
 import AppError from "../utils/appError.js";
-import { getLastMonday } from "./days.js";
 import Progress from "../models/progress.js";
-var postGoal = function(req, res) {
+export var getLastSunday = function(date) {
+    date = new Date(date);
+    date.setDate(date.getDate() - date.getDay());
+    return date;
+};
+export var getLastMonday = function(date) {
+    date = new Date(date);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (date.getDay() + 6) % 7);
+    return date;
+};
+var getP = function(searchDate, goal) {
     return _async_to_generator(function() {
-        var _req_body, goalForm, date, objectId, goal, user;
+        var progress;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _req_body = req.body, goalForm = _req_body.goalForm, date = _req_body.date;
-                    //const goal = await Goal.create(goalForm);
-                    objectId = new ObjectId();
-                    goal = _object_spread({
-                        _id: objectId
-                    }, goalForm);
                     return [
                         4,
-                        User.findByIdAndUpdate(req.user.id, {
-                            $push: {
-                                goals: goal
-                            }
+                        Progress.find({
+                            date: {
+                                $gt: searchDate.getTime()
+                            },
+                            goalId: goal._id.toString()
+                        }).sort({
+                            date: 1
                         })
                     ];
                 case 1:
-                    user = _state.sent();
+                    progress = _state.sent();
                     return [
                         2,
-                        res.send(goal)
+                        _object_spread_props(_object_spread({}, goal), {
+                            history: progress
+                        })
                     ];
             }
         });
     })();
 };
-export var queryDayDate = function(date) {
-    date = new Date(date);
-    date.setHours(0, 0, 0, 0);
-    return queryDate(date.getTime());
-};
-export var queryWeekDate = function(date) {
-    var lastMonday = getLastMonday(date);
-    return queryWeek(lastMonday.getTime());
-};
-var putGoalAmount = function(req, res) {
+var getProgresses = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, amount, _id, date, goal, promises, result;
+        var user, timestamp, date, promises, days;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _req_body = req.body, amount = _req_body.amount, _id = _req_body._id, date = _req_body.date;
-                    goal = req.user.goals.find(function(goal) {
-                        return goal._id == _id;
-                    });
-                    if (!goal) throw new AppError(1, 404, "goal not found");
-                    if (!(goal.frequency == 'daily')) return [
+                    if (typeof req.query.timestamp == 'string') timestamp = parseInt(req.query.timestamp, 10);
+                    if (!req.query.id) return [
                         3,
                         2
                     ];
                     return [
                         4,
-                        Day.findOneAndUpdate({
-                            $and: [
-                                {
-                                    "goal._id": new ObjectId(_id)
-                                },
-                                queryDayDate(date)
-                            ]
-                        }, {
-                            "goal.amount": amount
-                        }, {
-                            new: true
-                        })
+                        User.findById(req.query.id)
                     ];
                 case 1:
-                    _state.sent();
-                    return [
-                        3,
-                        4
-                    ];
+                    user = _state.sent();
+                    _state.label = 2;
                 case 2:
-                    if (!(goal.frequency == "weekly")) return [
+                    if (!user) user = req.user;
+                    if (user.id != req.user.id && user.profileType != "public" && !user.followers.includes(req.user.id.toString())) {
+                        throw new AppError(1, 401, "This profile is private, you cannot get information");
+                    }
+                    console.log("getting days:", user);
+                    // console.log({timestamp}, req.query)
+                    date = new Date(timestamp);
+                    date.setHours(0, 0, 0, 0);
+                    //const days = await Day.find({userId: req.user.id, $or: [{date: {$gte: date.getTime()}}, {$and: [{"goal.frequency":{$eq: "weekly"} }, {date: {$gte: date.getTime() - week}}]}]});
+                    promises = user.goals.map(function(goal) {
+                        var searchDate = goal.frequency === "daily" ? date : getLastMonday(date);
+                        return getP(searchDate, goal);
+                        return function() {
+                            return _async_to_generator(function() {
+                                var progress;
+                                return _ts_generator(this, function(_state) {
+                                    switch(_state.label){
+                                        case 0:
+                                            return [
+                                                4,
+                                                Progress.find({
+                                                    date: {
+                                                        $gt: searchDate.getTime()
+                                                    },
+                                                    goalId: goal._id.toString()
+                                                })
+                                            ];
+                                        case 1:
+                                            progress = _state.sent();
+                                            return [
+                                                2,
+                                                _object_spread_props(_object_spread({}, goal), {
+                                                    history: progress
+                                                })
+                                            ];
+                                    }
+                                });
+                            })();
+                        };
+                    });
+                    return [
+                        4,
+                        Promise.all(promises)
+                    ];
+                case 3:
+                    days = _state.sent();
+                    console.log("found days: ", days.length, {
+                        days: days,
+                        promises: promises
+                    }, {
+                        goals: user.goals
+                    }, date, getLastMonday(date), date.getDay());
+                    return [
+                        2,
+                        res.send(days)
+                    ];
+            }
+        });
+    })();
+};
+var getStats = function(req, res) {
+    return _async_to_generator(function() {
+        var userId, user, promises, result;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    userId = req.params.userId;
+                    console.log(req.params);
+                    if (!userId) return [
                         3,
-                        4
+                        2
                     ];
                     return [
                         4,
-                        Day.updateMany({
-                            $and: [
-                                {
-                                    "goal._id": new ObjectId(_id)
-                                },
-                                queryWeekDate(date)
-                            ]
-                        }, {
-                            "goal.amount": amount
-                        }, {
-                            new: true
-                        })
+                        User.findById(userId)
                     ];
-                case 3:
-                    _state.sent();
-                    _state.label = 4;
-                case 4:
+                case 1:
+                    user = _state.sent();
+                    _state.label = 2;
+                case 2:
+                    if (!user) {
+                        user = req.user;
+                    }
                     promises = [];
-                    req.user.goals.map(function(goal) {
+                    user.goals.map(function(goal) {
                         var promise = function() {
                             return _async_to_generator(function() {
                                 var days;
@@ -287,14 +325,9 @@ var putGoalAmount = function(req, res) {
                                         case 0:
                                             return [
                                                 4,
-                                                Day.find({
-                                                    userId: req.user.id,
-                                                    "goal._id": new ObjectId(goal._id),
-                                                    history: {
-                                                        $exists: true,
-                                                        $type: 'array',
-                                                        $ne: []
-                                                    }
+                                                Progress.find({
+                                                    userId: user.id,
+                                                    goalId: goal._id.toString()
                                                 }).sort({
                                                     date: 1
                                                 })
@@ -317,9 +350,44 @@ var putGoalAmount = function(req, res) {
                         4,
                         Promise.all(promises)
                     ];
-                case 5:
+                case 3:
                     result = _state.sent();
-                    res.send(result);
+                    return [
+                        2,
+                        res.send(result)
+                    ];
+            }
+        });
+    })();
+};
+var postProgress = function(req, res) {
+    return _async_to_generator(function() {
+        var _req_body, date, goalId, amount, notes, goal, newProgress, progress;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    console.log(req.body);
+                    _req_body = req.body, date = _req_body.date, goalId = _req_body.goalId, amount = _req_body.amount, notes = _req_body.notes;
+                    goal = req.user.goals.find(function(goal) {
+                        return goal._id.toString() === goalId;
+                    });
+                    newProgress = {
+                        date: date,
+                        userId: req.user.id,
+                        goalId: goalId,
+                        goalAmount: goal.amount,
+                        amount: amount,
+                        notes: notes,
+                        likesCount: 0,
+                        likes: []
+                    };
+                    return [
+                        4,
+                        Progress.create(newProgress)
+                    ];
+                case 1:
+                    progress = _state.sent();
+                    res.send(progress);
                     return [
                         2
                     ];
@@ -327,57 +395,30 @@ var putGoalAmount = function(req, res) {
         });
     })();
 };
-var putGoal = function(req, res) {
+var updateProgress = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, title, amount, frequency, _id, date, newGoal, newGoals, newUser, query, day;
+        var _req_body, date, _id, amount, notes, updatedProgress;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _req_body = req.body, title = _req_body.title, amount = _req_body.amount, frequency = _req_body.frequency, _id = _req_body._id, date = _req_body.date;
-                    console.log(req.body, queryDate(date));
-                    newGoals = req.user.goals.map(function(goal) {
-                        if (eqOid(goal._id, _id)) {
-                            newGoal = _object_spread_props(_object_spread({}, goal), {
-                                title: title,
-                                amount: amount,
-                                frequency: frequency
-                            });
-                            return newGoal;
-                        }
-                        return goal;
-                    });
-                    console.log(newGoal);
+                    console.log(req.body);
+                    _req_body = req.body, date = _req_body.date, _id = _req_body._id, amount = _req_body.amount, notes = _req_body.notes;
                     return [
                         4,
-                        User.findByIdAndUpdate(req.user.id, {
-                            goals: newGoals
+                        Progress.findByIdAndUpdate(_id, {
+                            notes: notes,
+                            amount: amount,
+                            date: date
                         }, {
                             new: true
                         })
                     ];
                 case 1:
-                    newUser = _state.sent();
-                    if (!newGoal) throw new AppError(1, 401, "invalid id");
-                    // Change Today with new Goal
-                    query = newGoal.frequency == "daily" ? queryDayDate(date) : queryWeekDate(date);
-                    return [
-                        4,
-                        Progress.updateMany({
-                            $and: [
-                                {
-                                    "goalId": newGoal._id.toString()
-                                },
-                                query
-                            ]
-                        }, {
-                            goalAmount: newGoal.amount
-                        }, {
-                            new: true
-                        })
-                    ];
-                case 2:
-                    day = _state.sent();
-                    res.send(newGoal);
+                    updatedProgress = _state.sent();
+                    console.log({
+                        updatedProgress: updatedProgress
+                    });
+                    res.send(updatedProgress);
                     return [
                         2
                     ];
@@ -385,44 +426,23 @@ var putGoal = function(req, res) {
         });
     })();
 };
-var completeGoal = function(req, res) {
+var deleteProgress = function(req, res) {
     return _async_to_generator(function() {
-        return _ts_generator(this, function(_state) {
-            return [
-                2
-            ];
-        });
-    })();
-};
-var deleteGoal = function(req, res) {
-    return _async_to_generator(function() {
-        var id, newGoals, user;
+        var id, deletedProgress;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
                     id = req.query.id;
                     return [
                         4,
-                        Day.deleteMany({
-                            "goal._id": new ObjectId(id)
-                        })
+                        Progress.findByIdAndDelete(id)
                     ];
                 case 1:
-                    _state.sent();
-                    newGoals = req.user.goals.filter(function(goal) {
-                        return !eqOid(goal._id, id);
+                    deletedProgress = _state.sent();
+                    console.log({
+                        deletedProgress: deletedProgress
                     });
-                    return [
-                        4,
-                        User.findByIdAndUpdate(req.user.id, {
-                            goals: newGoals
-                        }, {
-                            new: true
-                        })
-                    ];
-                case 2:
-                    user = _state.sent();
-                    res.send(user);
+                    res.send(deletedProgress);
                     return [
                         2
                     ];
@@ -430,11 +450,4 @@ var deleteGoal = function(req, res) {
         });
     })();
 };
-var controller = {
-    postGoal: postGoal,
-    putGoal: putGoal,
-    putGoalAmount: putGoalAmount,
-    deleteGoal: deleteGoal
-};
-export { postGoal, putGoal, putGoalAmount, deleteGoal };
-export default controller;
+export { getProgresses, postProgress, getStats, updateProgress, deleteProgress };

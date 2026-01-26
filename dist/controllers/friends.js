@@ -170,7 +170,7 @@ import User from "../models/user.js";
 import AppError from "../utils/appError.js";
 import { addNotification, removeRequestAndNotification } from "../functions/friends.js";
 import { dayInMilliseconds } from "../utils.js";
-import { getLastMonday } from "./days.js";
+import { getLastMonday } from "./progress.js";
 var week = 7 * dayInMilliseconds;
 var aggregateFriendDays = function(userId, date, skip, limit) {
     return [
@@ -184,7 +184,16 @@ var aggregateFriendDays = function(userId, date, skip, limit) {
         },
         {
             $lookup: {
-                from: "days",
+                from: "progresses",
+                localField: "following",
+                foreignField: "userId",
+                as: "goals",
+                pipeline: []
+            }
+        },
+        {
+            $lookup: {
+                from: "progresses",
                 localField: "following",
                 foreignField: "userId",
                 as: "goals",
@@ -216,16 +225,7 @@ var aggregateFriendDays = function(userId, date, skip, limit) {
                     },
                     {
                         $group: {
-                            "_id": "$goal._id",
-                            "title": {
-                                $first: "$goal.title"
-                            },
-                            "type": {
-                                $first: "$goal.type"
-                            },
-                            "amount": {
-                                $first: "$goal.amount"
-                            },
+                            "_id": "$goalId",
                             "date": {
                                 $first: "$date"
                             },
@@ -236,6 +236,67 @@ var aggregateFriendDays = function(userId, date, skip, limit) {
                                 $first: "$userId"
                             }
                         }
+                    }
+                ]
+            }
+        },
+        {
+            $project: {
+                _id: {
+                    $toObjectId: "$following"
+                },
+                goals: 1
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        {
+            $unwind: "$user"
+        },
+        {
+            $project: {
+                _id: 1,
+                name: "$user.name",
+                goals: 1,
+                profileImg: "$user.profileImg",
+                goalsInfo: "$user.goals"
+            }
+        }
+    ];
+};
+var aggregateFriendDays2 = function(userId, date, skip, limit) {
+    return [
+        {
+            $match: {
+                _id: new ObjectId(userId)
+            }
+        },
+        {
+            $unwind: "$following"
+        },
+        {
+            $lookup: {
+                from: "progresses",
+                localField: "following",
+                foreignField: "userId",
+                as: "goals",
+                pipeline: [
+                    {
+                        $sort: {
+                            date: -1
+                        }
+                    },
+                    {
+                        $skip: skip
+                    },
+                    {
+                        $limit: limit
                     }
                 ]
             }
@@ -320,6 +381,36 @@ var getLazyFriends = function(req, res) {
         });
     })();
 };
+var getLazyProgress = function(req, res) {
+    return _async_to_generator(function() {
+        var offset, _req_query, index, timestamp, date, response;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    offset = 20;
+                    _req_query = req.query, index = _req_query.index, timestamp = _req_query.timestamp;
+                    date = new Date(parseInt(timestamp, 10));
+                    date.setHours(0, 0, 0, 0);
+                    console.log({
+                        offset: offset,
+                        index: index,
+                        date: date
+                    });
+                    return [
+                        4,
+                        User.aggregate(aggregateFriendDays2(req.user.id, date.getTime(), index * offset, offset))
+                    ];
+                case 1:
+                    response = _state.sent();
+                    console.log("hey", response);
+                    res.send(response);
+                    return [
+                        2
+                    ];
+            }
+        });
+    })();
+};
 var getFriends = function(req, res) {
     return _async_to_generator(function() {
         var id, friend, promises, _ref, followers, incomingFriendRequests, outgoingFriendRequests, friendDays;
@@ -384,7 +475,6 @@ var getFriends = function(req, res) {
                         _state.sent(),
                         4
                     ]), followers = _ref[0], incomingFriendRequests = _ref[1], outgoingFriendRequests = _ref[2], friendDays = _ref[3];
-                    // console.log({friends, incomingFriendRequests, outgoingFriendRequests, friendDays})
                     return [
                         2,
                         res.send({
@@ -697,4 +787,4 @@ var unfollow = function(req, res) {
         });
     })();
 };
-export { getFriends, getLazyFriends, acceptFriendRequest, sendFriendRequest, cancelFriendRequest, ignoreFriendRequest, deleteFollower, unfollow };
+export { getFriends, getLazyFriends, acceptFriendRequest, sendFriendRequest, cancelFriendRequest, ignoreFriendRequest, getLazyProgress, deleteFollower, unfollow };

@@ -7,6 +7,8 @@ import { Response } from "express";
 import { eqOid } from "../utils.js";
 import AppError from "../utils/appError.js";
 import { getLastMonday } from "./days.js";
+import Progress from "../models/progress.js";
+
 
 const postGoal = async(req, res) =>{
     let {goalForm, date} = req.body;
@@ -19,17 +21,8 @@ const postGoal = async(req, res) =>{
     const user = await User.findByIdAndUpdate(req.user.id, {
         $push: {goals: goal}
     })
-    // let latestDay = await Day.findOne({userId: user.id}, null, {sort: {date: -1}})
-    // if(!latestDay) {
-    //     latestDay = await Day.create({goal: goalForm, date: date });
-    // }
-    // else if(latestDay.date < date) {
-    //     latestDay = await Day.create({goal: goalForm, date: date });
-    // }else {
-    //     latestDay = await Day.create({goal: goalForm, date: date });
-    // }
-    let day = await Day.create({goal: goal, date: date, userId: user.id});
-    return res.send(day)
+
+    return res.send(goal)
 }
 export const queryDayDate = (date: number | Date) =>{
     date = new Date(date);
@@ -76,13 +69,10 @@ const putGoal = async(req: ProtectedReq, res: Response) =>{
     const newUser = await User.findByIdAndUpdate(req.user.id, {goals: newGoals}, {new: true});
     if(!newGoal) throw new AppError(1, 401, "invalid id");
     // Change Today with new Goal
-    let day = await Day.findOneAndUpdate({$and: [{"goal._id": new ObjectId(newGoal._id)}, queryDayDate(date)]}, {goal: newGoal}, {new: true});
-     console.log("day updated", day)
-    if(!day) {
-         console.log("creating new day put goal")
-        day = await Day.create({goal: newGoal, date: date, userId: req.user.id })
-    }
-    res.send(day)
+    let query = newGoal.frequency == "daily" ? queryDayDate(date) : queryWeekDate(date);
+    let day = await Progress.updateMany({$and: [{"goalId": newGoal._id.toString()}, query]}, {goalAmount: newGoal.amount}, {new: true});
+
+    res.send(newGoal)
 
 }
 const completeGoal = async(req, res) =>{

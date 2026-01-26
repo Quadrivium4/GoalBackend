@@ -126,6 +126,55 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
+var replaceFile = function(file, oldFile) {
+    return _async_to_generator(function() {
+        var b64, dataURI, result, error;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    console.log("saving file.. " + file.name);
+                    b64 = Buffer.from(file.data).toString("base64");
+                    dataURI = "data:" + file.mimetype + ";base64," + b64;
+                    _state.label = 1;
+                case 1:
+                    _state.trys.push([
+                        1,
+                        3,
+                        ,
+                        4
+                    ]);
+                    return [
+                        4,
+                        cloudinary.uploader.upload(dataURI, {
+                            public_id: oldFile.public_id
+                        })
+                    ];
+                case 2:
+                    result = _state.sent();
+                    console.log(result);
+                    return [
+                        2,
+                        {
+                            url: result.url,
+                            name: file.name,
+                            public_id: result.public_id
+                        }
+                    ];
+                case 3:
+                    error = _state.sent();
+                    console.log("cloudinary error", error);
+                    return [
+                        3,
+                        4
+                    ];
+                case 4:
+                    return [
+                        2
+                    ];
+            }
+        });
+    })();
+};
 var saveFile = function(file) {
     return _async_to_generator(function() {
         var b64, dataURI, result, error;
@@ -232,4 +281,4 @@ var deleteFile = function(file) {
 //     })
 //     return stream.pipe(res);
 // }
-export { saveFile, deleteFile };
+export { saveFile, deleteFile, replaceFile,  };

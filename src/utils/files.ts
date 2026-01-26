@@ -10,10 +10,29 @@ cloudinary.config({
 export interface TFile {
     public_id: string,
     name: string,
-    url: string
+    url: string,
+    lastModified?: number
 
 }
-
+const replaceFile = async(file, oldFile: TFile): Promise<TFile> =>{
+    console.log("saving file.. " + file.name);
+    const b64 = Buffer.from(file.data).toString("base64");
+    let dataURI = "data:" + file.mimetype + ";base64," + b64;
+   //  console.log({dataURI, b64, mimetype: file.mimetype, name: file.name})
+   try {
+     const result = await cloudinary.uploader.upload(dataURI,{
+        public_id: oldFile.public_id,
+     });
+      console.log(result);
+    return {
+        url: result.url,
+        name: file.name,
+        public_id: result.public_id
+    }
+   } catch (error) {
+     console.log("cloudinary error", error)
+   }
+}
 const saveFile = async(file): Promise<TFile> =>{
      console.log("saving file.. " + file.name);
     const b64 = Buffer.from(file.data).toString("base64");
@@ -77,5 +96,6 @@ const deleteFile = async(file: TFile) =>{
 
 export {
     saveFile,
-    deleteFile
+    deleteFile,
+    replaceFile,
 }

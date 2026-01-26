@@ -123,7 +123,8 @@ const UserSchema = new mongoose.Schema({
     profileImg: {
         public_id: String,
         url: String,
-        name: String
+        name: String,
+        lastModified: Number
     },
     deletionToken: {
         type: String

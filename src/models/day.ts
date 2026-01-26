@@ -1,12 +1,9 @@
 import mongoose from "mongoose";
 import { TGoal } from "./user.js";
 import { TFile } from "../utils/files.js";
+import { TLike } from "./likes.js";
 
-export type TLike = {
-    userId: string,
-    username: string,
-    profileImg: TFile
-}
+
 export type THistoryEvent = {
     progress: number,
     date: number,
