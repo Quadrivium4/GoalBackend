@@ -21,7 +21,7 @@ const sendMail = async ({to, subject, body, attachments = []}) => {
     port: 465,
     secure: true, // true for 465, false for other ports
     auth: {
-      user: 'support@goalapp.it', // your domain email address
+      user: 'smtp@goalapp.it', // your domain email address
       pass: process.env.MAIL_PSW // your password
     }
   });

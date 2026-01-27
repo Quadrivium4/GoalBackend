@@ -139,7 +139,7 @@ var sendMail = function(param) {
                         port: 465,
                         secure: true,
                         auth: {
-                            user: 'support@goalapp.it',
+                            user: 'smtp@goalapp.it',
                             pass: process.env.MAIL_PSW // your password
                         }
                     });
