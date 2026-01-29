@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 var NotificationSchema = new mongoose.Schema({
     date: {
         type: Number
@@ -12,7 +13,12 @@ var NotificationSchema = new mongoose.Schema({
             type: String
         },
         userId: {
-            type: String
+            type: ObjectId
+        },
+        profileImg: {
+            public_id: String,
+            name: String,
+            url: String
         }
     },
     status: {
@@ -44,8 +50,12 @@ var UserSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    incomingFriendRequests: [],
-    outgoingFriendRequests: [],
+    incomingFriendRequests: [
+        ObjectId
+    ],
+    outgoingFriendRequests: [
+        ObjectId
+    ],
     profileImg: {
         public_id: String,
         url: String,
@@ -61,8 +71,12 @@ var UserSchema = new mongoose.Schema({
     notifications: [
         NotificationSchema
     ],
-    followers: [],
-    following: [],
+    followers: [
+        ObjectId
+    ],
+    following: [
+        ObjectId
+    ],
     profileType: {
         type: String
     },

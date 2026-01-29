@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 var ProgressSchema = new mongoose.Schema({
     userId: {
-        type: String
+        type: ObjectId
     },
     date: {
         type: Number
@@ -12,12 +13,22 @@ var ProgressSchema = new mongoose.Schema({
     notes: {
         type: String
     },
-    likes: [],
+    likes: [
+        {
+            profileImg: {
+                public_id: String,
+                url: String,
+                name: String
+            },
+            userId: ObjectId,
+            username: String
+        }
+    ],
     likesCount: {
         type: Number
     },
     goalId: {
-        type: String
+        type: ObjectId
     },
     goalAmount: {
         type: Number

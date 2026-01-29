@@ -66,13 +66,15 @@ const putGoal = async(req: ProtectedReq, res: Response) =>{
         return goal
     })
      console.log(newGoal);
-    const newUser = await User.findByIdAndUpdate(req.user.id, {goals: newGoals}, {new: true});
-    if(!newGoal) throw new AppError(1, 401, "invalid id");
-    // Change Today with new Goal
-    let query = newGoal.frequency == "daily" ? queryDayDate(date) : queryWeekDate(date);
-    let day = await Progress.updateMany({$and: [{"goalId": newGoal._id.toString()}, query]}, {goalAmount: newGoal.amount}, {new: true});
-
-    res.send(newGoal)
+     if(!newGoal) throw new AppError(1, 401, "invalid id");
+     let query = newGoal.frequency == "daily" ? queryDayDate(date) : queryWeekDate(date);
+    const userPromise = User.findByIdAndUpdate(req.user.id, {goals: newGoals}, {new: true});
+    const progressUpdatePromise = Progress.updateMany({$and: [{"goalId": newGoal._id}, query]}, {goalAmount: newGoal.amount}, {new: true});
+    
+    let result = await Promise.all([userPromise, progressUpdatePromise])
+    let progresses = await Progress.find({$and: [{"goalId": newGoal._id}, query]}).sort({date: -1});
+    console.log(result, {progresses})
+    res.send({goal: newGoal, progresses})
 
 }
 const completeGoal = async(req, res) =>{
@@ -85,8 +87,8 @@ interface IQuery {
 const deleteGoal = async(req: ProtectedReq<{},{},{}, IQuery>, res: Response) =>{
     const {id}= req.query;
 
-    await Day.deleteMany({"goal._id": new ObjectId(id)});
-    let newGoals = req.user.goals.filter(goal => !eqOid(goal._id, id));
+    await Progress.deleteMany({"goalId": new ObjectId(id)});
+    let newGoals = req.user.goals.filter(goal => !goal._id.equals(id));
 
     let user = await User.findByIdAndUpdate(req.user.id, {goals: newGoals}, {new: true})
     res.send(user)

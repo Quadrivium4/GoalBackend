@@ -182,6 +182,7 @@ export var getLastMonday = function(date) {
     date = new Date(date);
     date.setHours(0, 0, 0, 0);
     date.setDate(date.getDate() - (date.getDay() + 6) % 7);
+    console.log("last monday date", date.getTime());
     return date;
 };
 var getP = function(searchDate, goal) {
@@ -196,7 +197,7 @@ var getP = function(searchDate, goal) {
                             date: {
                                 $gt: searchDate.getTime()
                             },
-                            goalId: goal._id.toString()
+                            goalId: goal._id
                         }).sort({
                             date: 1
                         })
@@ -244,33 +245,6 @@ var getProgresses = function(req, res) {
                     promises = user.goals.map(function(goal) {
                         var searchDate = goal.frequency === "daily" ? date : getLastMonday(date);
                         return getP(searchDate, goal);
-                        return function() {
-                            return _async_to_generator(function() {
-                                var progress;
-                                return _ts_generator(this, function(_state) {
-                                    switch(_state.label){
-                                        case 0:
-                                            return [
-                                                4,
-                                                Progress.find({
-                                                    date: {
-                                                        $gt: searchDate.getTime()
-                                                    },
-                                                    goalId: goal._id.toString()
-                                                })
-                                            ];
-                                        case 1:
-                                            progress = _state.sent();
-                                            return [
-                                                2,
-                                                _object_spread_props(_object_spread({}, goal), {
-                                                    history: progress
-                                                })
-                                            ];
-                                    }
-                                });
-                            })();
-                        };
                     });
                     return [
                         4,
@@ -327,7 +301,7 @@ var getStats = function(req, res) {
                                                 4,
                                                 Progress.find({
                                                     userId: user.id,
-                                                    goalId: goal._id.toString()
+                                                    goalId: goal._id
                                                 }).sort({
                                                     date: 1
                                                 })
@@ -369,12 +343,12 @@ var postProgress = function(req, res) {
                     console.log(req.body);
                     _req_body = req.body, date = _req_body.date, goalId = _req_body.goalId, amount = _req_body.amount, notes = _req_body.notes;
                     goal = req.user.goals.find(function(goal) {
-                        return goal._id.toString() === goalId;
+                        return goal._id.equals(goalId);
                     });
                     newProgress = {
                         date: date,
-                        userId: req.user.id,
-                        goalId: goalId,
+                        userId: req.user._id,
+                        goalId: goal._id,
                         goalAmount: goal.amount,
                         amount: amount,
                         notes: notes,

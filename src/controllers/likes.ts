@@ -8,6 +8,7 @@ import { ObjectId } from "mongodb";
 import { addNotification } from "../functions/friends.js";
 import Progress from "../models/progress.js";
 import Like, { TLike } from "../models/likes.js";
+import AppError from "../utils/appError.js";
 
 const updateProgressLikes = async(req: ProtectedReq, res: Response) =>{
      console.log(req.body)
@@ -18,7 +19,7 @@ const updateProgressLikes = async(req: ProtectedReq, res: Response) =>{
         profileImg: req.user.profileImg,
         username: req.user.name
     }
-    let progress = await Progress.findByIdAndUpdate(id, {
+    let progress = await Progress.findOneAndUpdate({_id: new ObjectId(id), "likes.userId": {$ne: req.user._id}}, {
         $inc: {
             likesCount: 1
         },
@@ -26,6 +27,8 @@ const updateProgressLikes = async(req: ProtectedReq, res: Response) =>{
             likes: like
         }
     },{new: true});
+    console.log(progress);
+    if(!progress) throw new AppError(1, 400, "you alread liked it")
 
    
 

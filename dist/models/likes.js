@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 var LikeSchema = new mongoose.Schema({
     progressId: {
         type: String
     },
     userId: {
-        type: String
+        type: ObjectId
     },
     username: {
         type: String

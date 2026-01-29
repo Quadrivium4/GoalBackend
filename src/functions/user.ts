@@ -11,6 +11,7 @@ import { isValidObjectId } from "mongoose";
 import Day from "../models/day.js";
 import { ObjectId } from "mongodb";
 import { deleteFile } from "../utils/files.js";
+import Progress from "../models/progress.js";
 
 const createOrLoginUserFromGoogle = async(accessToken) =>{
     const googleUser = await fetch("https://www.googleapis.com/userinfo/v2/me", {
@@ -120,17 +121,26 @@ const deleteUser = async(id: string) =>{
     const deletedUser: TUser = await User.findByIdAndDelete(id);
     
     if(!deletedUser ) throw new AppError(1, 401, "No User to delete found");
-    const deletedDays = await Day.deleteMany({userId: id});
+    const deletedDays = Day.deleteMany({userId: deletedUser._id});
     const followersOids = deletedUser.followers.map(friendId => new ObjectId(friendId));
     const followingOids = deletedUser.followers.map(friendId => new ObjectId(friendId));
     
-    const updatedFollowers = await User.updateMany({_id: {$in: followersOids}}, { $pull: {
-            following: deletedUser.id
+    const updatedFollowers = User.updateMany({_id: {$in: followersOids}}, { $pull: {
+            following: deletedUser._id
         }});
 
-    const updatedFollowing = await User.updateMany({_id: {$in: followingOids}}, { $pull: {
-        followers: deletedUser.id
+    const updatedFollowing = User.updateMany({_id: {$in: followingOids}}, { $pull: {
+        followers: deletedUser._id
     }});
+    const updateFollowingRequests = User.updateMany({_id: {$in: deletedUser.outgoingFriendRequests}},{ $pull: {
+        incomingFriendRequests: deletedUser._id
+    }})
+    const updateFollowersRequests = User.updateMany({_id: {$in: deletedUser.incomingFriendRequests}},{ $pull: {
+        outgoingFriendRequests: deletedUser._id
+    }})
+    const updateProgressesLikes = Progress.updateMany({"likes.userId": deletedUser._id}, {$pull: { likes: {userId: deletedUser._id}}, $inc: {likesCount: -1}})
+    const result = await Promise.all([deletedDays, updatedFollowers, updatedFollowing, updateFollowersRequests, updateFollowingRequests, updateProgressesLikes]);
+    console.log("deleting all info", result);
     deleteFile(deletedUser.profileImg);
     return deletedUser
 }

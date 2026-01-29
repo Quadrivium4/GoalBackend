@@ -19,10 +19,11 @@ export const getLastMonday = (date: number | Date) =>{
   date = new Date(date);
   date.setHours(0,0,0,0);
   date.setDate(date.getDate() - (date.getDay() + 6) % 7);
+  console.log("last monday date", date.getTime())
   return date;
 }
 const getP = async (searchDate: Date, goal: TGoal) => {
-            let progress = await Progress.find({date: {$gt: searchDate.getTime()}, goalId: goal._id.toString()}).sort({date: 1})
+            let progress = await Progress.find({date: {$gt: searchDate.getTime()}, goalId: goal._id}).sort({date: 1})
             return {
                 ...goal,
                 history: progress
@@ -47,13 +48,7 @@ const getProgresses = async(req: ProtectedReq, res) =>{
     const promises = user.goals.map(goal => {
         let searchDate = goal.frequency  === "daily" ? date : getLastMonday(date);
         return getP(searchDate, goal);
-        return async () => {
-            let progress = await Progress.find({date: {$gt: searchDate.getTime()}, goalId: goal._id.toString()});
-            return {
-                ...goal,
-                history: progress
-            }
-        }
+
     })
     const days = await Promise.all(promises);
     console.log("found days: ", days.length, {days, promises}, {goals: user.goals}, date, getLastMonday(date), date.getDay())
@@ -73,7 +68,7 @@ const getStats = async(req: ProtectedReq, res: Response) =>{
     const promises = [];
     user.goals.map(goal =>{
         let promise = async() => {
-          let days = await Progress.find({userId: user.id, goalId: goal._id.toString()}).sort({date: 1})
+          let days = await Progress.find({userId: user.id, goalId: goal._id}).sort({date: 1})
           return {...goal, days}
         }
         promises.push(promise());
@@ -84,11 +79,11 @@ const getStats = async(req: ProtectedReq, res: Response) =>{
 const postProgress = async(req: ProtectedReq, res: Response) =>{
      console.log(req.body)
     const {date, goalId, amount, notes} = req.body;
-    const goal = req.user.goals.find(goal => goal._id .toString()=== goalId);
+    const goal = req.user.goals.find(goal => goal._id.equals(goalId));
     const newProgress: TProgress = {
         date,
-        userId: req.user.id,
-        goalId,
+        userId: req.user._id,
+        goalId: goal._id,
         goalAmount: goal.amount, 
         amount,
         notes,

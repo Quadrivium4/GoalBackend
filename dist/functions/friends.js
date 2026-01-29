@@ -182,7 +182,7 @@ import { ObjectId } from "mongodb";
 // }
 var createNotification = function(part) {
     return _object_spread_props(_object_spread({}, part), {
-        _id: new ObjectId().toHexString()
+        _id: new ObjectId()
     });
 };
 var addNotification = function(userId, part) {
@@ -192,7 +192,7 @@ var addNotification = function(userId, part) {
             switch(_state.label){
                 case 0:
                     notification = _object_spread_props(_object_spread({}, part), {
-                        _id: new ObjectId().toHexString()
+                        _id: new ObjectId()
                     });
                     return [
                         4,
@@ -268,7 +268,7 @@ var removeRequestAndNotification = function(requestingId, receivingId) {
                                 incomingFriendRequests: requestingId,
                                 notifications: {
                                     type: "incoming request",
-                                    "from.userId": requestingId.toString()
+                                    "from.userId": requestingId
                                 }
                             }
                         }, {

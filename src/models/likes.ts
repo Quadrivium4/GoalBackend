@@ -1,9 +1,10 @@
 import mongoose from "mongoose"
+import {ObjectId} from "mongodb"
 import { TFile } from "../utils/files.js"
 
 export type TLike = {
-    progressId: string,
-    userId: string,
+    progressId: ObjectId,
+    userId: ObjectId,
     username: string,
     profileImg: TFile
 }
@@ -13,7 +14,7 @@ const LikeSchema = new mongoose.Schema({
         type: String
     },
     userId: {
-        type: String
+        type: ObjectId
     },
     username: {
         type: String

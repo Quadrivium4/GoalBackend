@@ -154,7 +154,7 @@ const profileImgUpload = async(req, res) =>{
      console.log("profile image updated",{ user})
     res.send(fileId)
 }
-const profileImgUpdate = async(req, res) =>{
+const profileImgUpdate = async(req: ProtectedReq, res) =>{
     const {name, public_id, url} = req.body;
     const file = {
         name, public_id, url, lastModified: Date.now()
@@ -166,7 +166,9 @@ const profileImgUpdate = async(req, res) =>{
     if(req.user.profileImg){
          deleteFile(req.user.profileImg)
     }
-    const updatedProgressesLikes = await Progress.updateMany({"likes.userId": req.user.id.toString()}, {$set: {"likes.$.profileImg": file}})
+    const updatedProgressesLikes = await Progress.updateMany({"likes.userId": req.user._id}, {$set: {"likes.$.profileImg": file}})
+    const updatedNotifications = await User.updateMany({"notifications.from.userId": req.user._id}, {$set: {"notifications.$[notification].from.profileImg": file}},   { "arrayFilters": [{ "notification.from.userId": req.user._id }], "multi": true })
+    console.log(updatedNotifications)
      //console.log("profile image updated",{ user})
     res.send(file)
 }
@@ -242,12 +244,13 @@ const getUsers = async(req: ProtectedReq, res) =>{
     let filter: any = {
         _id: {$ne: req.user._id}
     };
+    
     if(flt === "followers"){
         let followers = req.user.followers || [];
-        filter._id = {$in: arrayToOids(followers)}
+        filter._id = {$in: req.user.followers}
     }else if(flt === "following"){
         let following = req.user.following || [];
-        filter._id = {$in: arrayToOids(following)}
+        filter._id = {$in: req.user.following}
     }
 
     if(search){
@@ -259,11 +262,12 @@ const getUsers = async(req: ProtectedReq, res) =>{
     let projection = {
         name: 1,
         profileImg: 1,
+        profileType: 1,
         visible: {
             "$cond":[
                 {
                     $or: [
-                        {$in: [ req.user.id.toString(), "$followers"]},
+                        {$in: [ req.user.id, "$followers"]},
                         {$eq: ["$profileType", "public"]},
 
                     ]
@@ -277,7 +281,7 @@ const getUsers = async(req: ProtectedReq, res) =>{
     }
 }
     const users = await User.find(filter, projection).skip(index * offset).limit(offset);
-    return res.send(users)
+    return res.send({users, user: req.user});
 }
 const updateUser = async(req, res) =>{
 
@@ -292,7 +296,7 @@ const getNotifications = async(req: ProtectedReq<{},{} ,{} , {timestamp: number}
 
     
     const user = await deleteOldNotifications(req.user.id, timestamp );
-    res.send(user.notifications)
+    res.send(user)
 
 
 }

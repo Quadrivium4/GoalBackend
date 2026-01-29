@@ -1,21 +1,21 @@
 import mongoose from "mongoose"
 import { TLike } from "./likes.js";
-
+import {ObjectId} from "mongodb"
 
 export type TProgress = {
-    userId: string,
+    userId: ObjectId,
     date: number,
     amount: number,
     notes: string,
     likes: TLike[],
     likesCount: number,
-    goalId: string,
+    goalId: ObjectId,
     goalAmount: number
 }
 
 const ProgressSchema = new mongoose.Schema({
     userId: {
-        type: String
+        type: ObjectId
     },
     date: {
         type: Number
@@ -26,12 +26,20 @@ const ProgressSchema = new mongoose.Schema({
     notes: {
         type: String,
     },
-    likes: [],
+    likes: [{
+        profileImg: {
+            public_id: String,
+            url: String,
+            name: String
+        },
+        userId: ObjectId,
+        username: String
+    }],
     likesCount: {
         type: Number
     },
     goalId: {
-        type: String
+        type: ObjectId
     },
     goalAmount: {
         type: Number

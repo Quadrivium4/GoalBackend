@@ -9,6 +9,7 @@ import { dayInMilliseconds } from "../utils.js";
 import { ProtectedReq } from "../routes.js";
 import { getLastMonday } from "./progress.js";
 import Progress from "../models/progress.js";
+import { TFile } from "../utils/files.js";
 const week = 7 * dayInMilliseconds
 const aggregateFriendDays = (userId: string, date: number,  skip: number, limit: number):mongoose.PipelineStage[] => [
   {
@@ -103,92 +104,61 @@ const aggregateFriendDays = (userId: string, date: number,  skip: number, limit:
   },
 ]
 
-const aggregateFriendDays2 = (userId: string, date: number,  skip: number, limit: number):mongoose.PipelineStage[] => [
-  {
-    $match: {
-      _id: new ObjectId(userId),
-    },
-  },
-  {
-    $unwind: "$following",
-  }, 
-  {
-    $lookup: {
-      from: "progresses",
-      localField: "following",
-      foreignField: "userId",
-      as: "goals",
-      pipeline: [
-        {
-          $sort: {
-            date: -1
-          },
-         
-        },{
-           $skip: skip,
-         
-        },{
-   
-          $limit: limit
-        }
-         
-        ],
-       
-        
-    },
-  },
-  {
-    $project:
-      {
-        _id: {
-          $toObjectId: "$following",
-        },
-        goals: 1,
-      },
-  },
-  {
-    $lookup:
-      {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "user",
-      },
-  },
-  {
-    $unwind: "$user",
-  },
-  {
+const aggregateFriendDays2 = (following: ObjectId[],  skip: number, limit: number):mongoose.PipelineStage[] => [{
+  $match:
+    {
+      userId: {
+        $in: following
+      }
+    }
+},
+{
+  $sort: {
+      date: -1
+    }
+},{
+  $skip: skip
+},
+ {
+  $limit: limit
+},
+{
+  $lookup: 
+{
+  from: "users",
+  localField: "userId",
+  foreignField: "_id",
+  pipeline: [{
     $project: {
-      _id: 1,
-      name: "$user.name",
       goals: 1,
-      profileImg: "$user.profileImg",
-      goalsInfo: "$user.goals"
-    },
-  },
-]
-const aggregateDayFriends = [
-  {
+      name: 1,
+      profileImg: 1
+    }
+  }],
+  as: "user"
+}
+},{
+  $unwind: "$user"
+},{
     $addFields:
       {
-        userObjectId: {
-          $toObjectId: "$userId",
-        },
-      },
-  },
-  {
-    $lookup:
-      {
-        from: "users",
-        localField: "userObjectId",
-        foreignField: "_id",
-        as: "user",
-      },
-  },
-  {
-    $unwind: "$user",
-  },
+        goal: {
+          $reduce: {
+            input: "$user.goals",
+            initialValue: null,
+            in: {
+              $cond: [
+                {
+                  $eq: ["$$this._id", "$goalId"]
+                },
+                "$$this",
+                "$$value"
+              ]
+            }
+          }
+        }
+      }
+  }
 ]
 
 const getLazyFriends = async(req, res) =>{
@@ -204,16 +174,17 @@ const getLazyFriends = async(req, res) =>{
      console.log("hey", response)
     res.send(response)
 }
-const getLazyProgress = async(req, res) =>{
+const getLazyProgress = async(req: ProtectedReq, res) =>{
     const offset = 20;
     const {index, timestamp} = req.query;
-    const date = new Date(parseInt(timestamp, 10));
+    const date = new Date(parseInt(timestamp.toString(), 10));
+    const indexNum = parseInt(index.toString(), 10);
     date.setHours(0,0,0,0);
 
      console.log({offset, index, date})
     //const friends = await getUserFriends(req.user);
     //const response = await Progress.find({userId: {$in: req.user.following || []}}).sort({date: -1}).skip(index * offset).limit(offset);
-    const response = await User.aggregate(aggregateFriendDays2(req.user.id,date.getTime(), index * offset, offset));
+    const response = await Progress.aggregate(aggregateFriendDays2(req.user.following, indexNum * offset, offset));
      console.log("hey", response)
     res.send(response)
 }
@@ -245,11 +216,29 @@ const getFriends = async (req, res) => {
     }
     
 }
-const sendFriendRequest = async(req, res) =>{
+const sendFriendRequest = async(req: ProtectedReq, res) =>{
     const {id} = req.params;
     const friend = await User.findById(id);
-    if(friend.followers.find(id =>id == req.user.id)) throw new AppError(1, 400, `You are already following ${friend.name} `);
-    if(friend.incomingFriendRequests.includes(req.user.id)) throw new AppError(1, 400, `You already sent a friend request to ${friend.name}`);
+    if(friend.followers.find(id => id.equals(req.user.id))) throw new AppError(1, 400, `You are already following ${friend.name} `);
+    if(friend.incomingFriendRequests.find(id => id.equals(req.user.id))) throw new AppError(1, 400, `You already sent a friend request to ${friend.name}`);
+
+    if(friend.profileType == "public"){
+      await addNotification(friend.id, newFollowerNotification(req.user.name, req.user._id, req.user.profileImg))
+      const result = await User.findByIdAndUpdate(id, {
+          $push: {
+              followers: req.user.id
+          }
+      }, {new: true})
+      const user = await User.findByIdAndUpdate(req.user.id,{
+          $push: {
+              following: id
+          }
+      }, {new: true})
+      console.log("friend request automatically accepted", {user, friend})
+      res.send(user)
+    }else {
+
+    
     await addNotification(friend.id, {
       date: Date.now(),
       content: "new follower request",
@@ -272,37 +261,40 @@ const sendFriendRequest = async(req, res) =>{
     }, {new: true})
      console.log("send friend request", {user, friend})
     res.send(user)
+  }
 
 }
-const acceptedFriendNotification = (name: string, id: string) : TNotification=> ({
+const acceptedFriendNotification = (name: string, id: ObjectId, profileImg: TFile) : TNotification=> ({
   type: "accepted request",
   date: Date.now(),
-  _id: new ObjectId().toHexString(),
+  _id: new ObjectId(),
   content: `you are now following ${name}`,
   from:{
     userId: id,
-    name: name
+    name: name,
+    profileImg: profileImg
   },
   status: "unread"
 })
-const newFollowerNotification = (name: string, id: string): TNotification => ({
+const newFollowerNotification = (name: string, id: ObjectId, profileImg: TFile): TNotification => ({
   type: "new follower",
   date: Date.now(),
-  _id: new ObjectId().toHexString(),
+  _id: new ObjectId(),
   content: `${name} is now following you!`,
   from:{
     userId: id,
-    name: name
+    name: name,
+    profileImg: profileImg,
   },
   status: "unread"
 })
 const acceptFriendRequest = async(req: ProtectedReq, res) =>{
     const { id } = req.params;
-    if(!req.user.incomingFriendRequests.includes(id)) throw new AppError(1, 400, "This person didn't send you any following request!")
+    if(!req.user.incomingFriendRequests.includes(new ObjectId(id))) throw new AppError(1, 400, "This person didn't send you any following request!")
     const friend = await User.findByIdAndUpdate(id, {
         $push: {
             following: req.user.id,
-            notifications: acceptedFriendNotification(req.user.name, req.user.id)
+            notifications: acceptedFriendNotification(req.user.name, req.user.id, req.user.profileImg)
         },
         $pull: {
             outgoingFriendRequests: req.user.id
@@ -313,13 +305,13 @@ const acceptFriendRequest = async(req: ProtectedReq, res) =>{
     let newUserNotifications = req.user.notifications.filter(not =>{
       return !(not.type == "incoming request" && not.from.userId == friend.id.toString())
     })
-    newUserNotifications.push(newFollowerNotification(friend.name, friend.id.toString()));
+    newUserNotifications.push(newFollowerNotification(friend.name, friend._id, friend.profileImg));
     const user = await User.findByIdAndUpdate(req.user.id, {
         $push: {
-            followers: friend.id,
+            followers: friend._id,
             },
         $pull: {
-            incomingFriendRequests: id,
+            incomingFriendRequests: friend._id,
   
         }, $set: {
           notifications: newUserNotifications
@@ -330,23 +322,23 @@ const acceptFriendRequest = async(req: ProtectedReq, res) =>{
     res.send(user)
 
 }
-const ignoreFriendRequest = async (req, res) => {
+const ignoreFriendRequest = async (req: ProtectedReq, res) => {
     const { id } = req.params;
      console.log("ignoring friend request", {id})
     //if (!req.user.incomingFriendRequests.includes(id)) throw new AppError(1, 400, `No friend request found from him`);
-    const user = await removeRequestAndNotification(id, req.user.id);
+    const user = await removeRequestAndNotification(new ObjectId(id), req.user._id);
     //  console.log("cancel friend request", {
     //     user,
     // })
     res.send(user)
     
 }
-const cancelFriendRequest = async (req, res) => {
+const cancelFriendRequest = async (req: ProtectedReq, res) => {
     const { id } = req.params;
      console.log("canceling friend request", {id})
     //if (!req.user.outgoingFriendRequests.includes(id)) throw new AppError(1, 400, `You didn't send any friend request to him!`);
     const friend = await User.findById(id)
-    const user = await removeRequestAndNotification(req.user.id, id)
+    const user = await removeRequestAndNotification(req.user._id,new ObjectId(id))
 
     //  console.log("cancel friend request", {
     //     user, friend

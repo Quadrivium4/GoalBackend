@@ -1,4 +1,5 @@
-import mongoose,  { Types }  from "mongoose";
+import mongoose,  {  Schema, Types }  from "mongoose";
+import {ObjectId} from "mongodb"
 import { TFile } from "../utils/files.js";
 export interface TGoal  {
     _id: Types.ObjectId,
@@ -10,13 +11,13 @@ export interface TGoal  {
 }
 
 export interface TNotification {
-    _id: string,
+    _id: ObjectId,
     date: number,
     content: string,
     type: "like" | "incoming request" | "accepted request" | "comment" | "new follower", 
     from: {
         name: string,
-        userId: string,
+        userId: ObjectId,
         profileImg?: TFile,
     }
     status: "read" | "unread"
@@ -36,8 +37,13 @@ const NotificationSchema = new mongoose.Schema({
             type: String
         }, 
         userId: {
-            type: String
+            type: ObjectId
         },
+        profileImg: {
+            public_id: String,
+            name: String,
+            url: String
+        }
     },
     status: {
         type: String
@@ -75,6 +81,7 @@ const NotificationSchema = new mongoose.Schema({
 //     }
 // });
 export interface TUser extends mongoose.Document  {
+    _id: ObjectId,
     name: string,
     email: string,
     password: string,
@@ -83,10 +90,10 @@ export interface TUser extends mongoose.Document  {
     goals: TGoal[],
     bio: string,
     googleLogin?: boolean,
-    outgoingFriendRequests: string[],
-    incomingFriendRequests: string[],
-    followers: string[],
-    following: string[],
+    outgoingFriendRequests: ObjectId[],
+    incomingFriendRequests: ObjectId[],
+    followers: ObjectId[],
+    following: ObjectId[],
     deletionToken?: string,
     changeEmailToken?: string,
     notifications: TNotification[],
@@ -94,6 +101,7 @@ export interface TUser extends mongoose.Document  {
     pro: boolean
 }
 const UserSchema = new mongoose.Schema({
+    
     name: {
         type: String,
         trim: true,
@@ -118,8 +126,8 @@ const UserSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    incomingFriendRequests: [],
-    outgoingFriendRequests: [],
+    incomingFriendRequests: [ObjectId],
+    outgoingFriendRequests: [ObjectId],
     profileImg: {
         public_id: String,
         url: String,
@@ -133,8 +141,8 @@ const UserSchema = new mongoose.Schema({
         type: String
     },
     notifications: [NotificationSchema],
-    followers: [],
-    following: [],
+    followers: [ObjectId],
+    following: [ObjectId],
     profileType: {
         type: String,
     

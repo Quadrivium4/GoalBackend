@@ -171,6 +171,7 @@ import AppError from "../utils/appError.js";
 import { addNotification, removeRequestAndNotification } from "../functions/friends.js";
 import { dayInMilliseconds } from "../utils.js";
 import { getLastMonday } from "./progress.js";
+import Progress from "../models/progress.js";
 var week = 7 * dayInMilliseconds;
 var aggregateFriendDays = function(userId, date, skip, limit) {
     return [
@@ -270,50 +271,40 @@ var aggregateFriendDays = function(userId, date, skip, limit) {
         }
     ];
 };
-var aggregateFriendDays2 = function(userId, date, skip, limit) {
+var aggregateFriendDays2 = function(following, skip, limit) {
     return [
         {
             $match: {
-                _id: new ObjectId(userId)
+                userId: {
+                    $in: following
+                }
             }
         },
         {
-            $unwind: "$following"
-        },
-        {
-            $lookup: {
-                from: "progresses",
-                localField: "following",
-                foreignField: "userId",
-                as: "goals",
-                pipeline: [
-                    {
-                        $sort: {
-                            date: -1
-                        }
-                    },
-                    {
-                        $skip: skip
-                    },
-                    {
-                        $limit: limit
-                    }
-                ]
+            $sort: {
+                date: -1
             }
         },
         {
-            $project: {
-                _id: {
-                    $toObjectId: "$following"
-                },
-                goals: 1
-            }
+            $skip: skip
+        },
+        {
+            $limit: limit
         },
         {
             $lookup: {
                 from: "users",
-                localField: "_id",
+                localField: "userId",
                 foreignField: "_id",
+                pipeline: [
+                    {
+                        $project: {
+                            goals: 1,
+                            name: 1,
+                            profileImg: 1
+                        }
+                    }
+                ],
                 as: "user"
             }
         },
@@ -321,36 +312,29 @@ var aggregateFriendDays2 = function(userId, date, skip, limit) {
             $unwind: "$user"
         },
         {
-            $project: {
-                _id: 1,
-                name: "$user.name",
-                goals: 1,
-                profileImg: "$user.profileImg",
-                goalsInfo: "$user.goals"
+            $addFields: {
+                goal: {
+                    $reduce: {
+                        input: "$user.goals",
+                        initialValue: null,
+                        in: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$$this._id",
+                                        "$goalId"
+                                    ]
+                                },
+                                "$$this",
+                                "$$value"
+                            ]
+                        }
+                    }
+                }
             }
         }
     ];
 };
-var aggregateDayFriends = [
-    {
-        $addFields: {
-            userObjectId: {
-                $toObjectId: "$userId"
-            }
-        }
-    },
-    {
-        $lookup: {
-            from: "users",
-            localField: "userObjectId",
-            foreignField: "_id",
-            as: "user"
-        }
-    },
-    {
-        $unwind: "$user"
-    }
-];
 var getLazyFriends = function(req, res) {
     return _async_to_generator(function() {
         var offset, _req_query, index, timestamp, date, response;
@@ -383,13 +367,14 @@ var getLazyFriends = function(req, res) {
 };
 var getLazyProgress = function(req, res) {
     return _async_to_generator(function() {
-        var offset, _req_query, index, timestamp, date, response;
+        var offset, _req_query, index, timestamp, date, indexNum, response;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
                     offset = 20;
                     _req_query = req.query, index = _req_query.index, timestamp = _req_query.timestamp;
-                    date = new Date(parseInt(timestamp, 10));
+                    date = new Date(parseInt(timestamp.toString(), 10));
+                    indexNum = parseInt(index.toString(), 10);
                     date.setHours(0, 0, 0, 0);
                     console.log({
                         offset: offset,
@@ -398,7 +383,7 @@ var getLazyProgress = function(req, res) {
                     });
                     return [
                         4,
-                        User.aggregate(aggregateFriendDays2(req.user.id, date.getTime(), index * offset, offset))
+                        Progress.aggregate(aggregateFriendDays2(req.user.following, indexNum * offset, offset))
                     ];
                 case 1:
                     response = _state.sent();
@@ -494,7 +479,7 @@ var getFriends = function(req, res) {
 };
 var sendFriendRequest = function(req, res) {
     return _async_to_generator(function() {
-        var id, friend, result, user;
+        var id, friend, result, user, result1, user1;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -506,9 +491,55 @@ var sendFriendRequest = function(req, res) {
                 case 1:
                     friend = _state.sent();
                     if (friend.followers.find(function(id) {
-                        return id == req.user.id;
+                        return id.equals(req.user.id);
                     })) throw new AppError(1, 400, "You are already following ".concat(friend.name, " "));
-                    if (friend.incomingFriendRequests.includes(req.user.id)) throw new AppError(1, 400, "You already sent a friend request to ".concat(friend.name));
+                    if (friend.incomingFriendRequests.find(function(id) {
+                        return id.equals(req.user.id);
+                    })) throw new AppError(1, 400, "You already sent a friend request to ".concat(friend.name));
+                    if (!(friend.profileType == "public")) return [
+                        3,
+                        5
+                    ];
+                    return [
+                        4,
+                        addNotification(friend.id, newFollowerNotification(req.user.name, req.user._id, req.user.profileImg))
+                    ];
+                case 2:
+                    _state.sent();
+                    return [
+                        4,
+                        User.findByIdAndUpdate(id, {
+                            $push: {
+                                followers: req.user.id
+                            }
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 3:
+                    result = _state.sent();
+                    return [
+                        4,
+                        User.findByIdAndUpdate(req.user.id, {
+                            $push: {
+                                following: id
+                            }
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 4:
+                    user = _state.sent();
+                    console.log("friend request automatically accepted", {
+                        user: user,
+                        friend: friend
+                    });
+                    res.send(user);
+                    return [
+                        3,
+                        9
+                    ];
+                case 5:
                     return [
                         4,
                         addNotification(friend.id, {
@@ -522,7 +553,7 @@ var sendFriendRequest = function(req, res) {
                             status: "unread"
                         })
                     ];
-                case 2:
+                case 6:
                     _state.sent();
                     return [
                         4,
@@ -534,8 +565,8 @@ var sendFriendRequest = function(req, res) {
                             new: true
                         })
                     ];
-                case 3:
-                    result = _state.sent();
+                case 7:
+                    result1 = _state.sent();
                     return [
                         4,
                         User.findByIdAndUpdate(req.user.id, {
@@ -546,13 +577,15 @@ var sendFriendRequest = function(req, res) {
                             new: true
                         })
                     ];
-                case 4:
-                    user = _state.sent();
+                case 8:
+                    user1 = _state.sent();
                     console.log("send friend request", {
-                        user: user,
+                        user: user1,
                         friend: friend
                     });
-                    res.send(user);
+                    res.send(user1);
+                    _state.label = 9;
+                case 9:
                     return [
                         2
                     ];
@@ -560,28 +593,30 @@ var sendFriendRequest = function(req, res) {
         });
     })();
 };
-var acceptedFriendNotification = function(name, id) {
+var acceptedFriendNotification = function(name, id, profileImg) {
     return {
         type: "accepted request",
         date: Date.now(),
-        _id: new ObjectId().toHexString(),
+        _id: new ObjectId(),
         content: "you are now following ".concat(name),
         from: {
             userId: id,
-            name: name
+            name: name,
+            profileImg: profileImg
         },
         status: "unread"
     };
 };
-var newFollowerNotification = function(name, id) {
+var newFollowerNotification = function(name, id, profileImg) {
     return {
         type: "new follower",
         date: Date.now(),
-        _id: new ObjectId().toHexString(),
+        _id: new ObjectId(),
         content: "".concat(name, " is now following you!"),
         from: {
             userId: id,
-            name: name
+            name: name,
+            profileImg: profileImg
         },
         status: "unread"
     };
@@ -593,13 +628,13 @@ var acceptFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
-                    if (!req.user.incomingFriendRequests.includes(id)) throw new AppError(1, 400, "This person didn't send you any following request!");
+                    if (!req.user.incomingFriendRequests.includes(new ObjectId(id))) throw new AppError(1, 400, "This person didn't send you any following request!");
                     return [
                         4,
                         User.findByIdAndUpdate(id, {
                             $push: {
                                 following: req.user.id,
-                                notifications: acceptedFriendNotification(req.user.name, req.user.id)
+                                notifications: acceptedFriendNotification(req.user.name, req.user.id, req.user.profileImg)
                             },
                             $pull: {
                                 outgoingFriendRequests: req.user.id
@@ -614,15 +649,15 @@ var acceptFriendRequest = function(req, res) {
                     newUserNotifications = req.user.notifications.filter(function(not) {
                         return !(not.type == "incoming request" && not.from.userId == friend.id.toString());
                     });
-                    newUserNotifications.push(newFollowerNotification(friend.name, friend.id.toString()));
+                    newUserNotifications.push(newFollowerNotification(friend.name, friend._id, friend.profileImg));
                     return [
                         4,
                         User.findByIdAndUpdate(req.user.id, {
                             $push: {
-                                followers: friend.id
+                                followers: friend._id
                             },
                             $pull: {
-                                incomingFriendRequests: id
+                                incomingFriendRequests: friend._id
                             },
                             $set: {
                                 notifications: newUserNotifications
@@ -653,7 +688,7 @@ var ignoreFriendRequest = function(req, res) {
                     });
                     return [
                         4,
-                        removeRequestAndNotification(id, req.user.id)
+                        removeRequestAndNotification(new ObjectId(id), req.user._id)
                     ];
                 case 1:
                     user = _state.sent();
@@ -686,7 +721,7 @@ var cancelFriendRequest = function(req, res) {
                     friend = _state.sent();
                     return [
                         4,
-                        removeRequestAndNotification(req.user.id, id)
+                        removeRequestAndNotification(req.user._id, new ObjectId(id))
                     ];
                 case 2:
                     user = _state.sent();

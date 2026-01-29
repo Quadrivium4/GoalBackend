@@ -6,17 +6,17 @@ import { ObjectId } from "mongodb";
 // }
 const createNotification = (part: Omit<TNotification, "_id">): TNotification => ({
     ...part,
-    _id: new ObjectId().toHexString()
+    _id: new ObjectId()
 })
-const addNotification = async(userId: string, part: Omit<TNotification, "_id">) =>{
+const addNotification = async(userId: ObjectId, part: Omit<TNotification, "_id">) =>{
     let notification: TNotification = {
         ...part,
-        _id: new ObjectId().toHexString()
+        _id: new ObjectId()
     };
     const user = await User.findByIdAndUpdate(userId,{$push: {notifications: notification}});
     return user;
 }
-const deleteRequestsNotification = (notifications: TNotification[], requestUserId: string ) =>{
+const deleteRequestsNotification = (notifications: TNotification[], requestUserId: ObjectId ) =>{
     const newNotifications = [];
     for(let notification of notifications){
       if(!(notification.type == "incoming request" && notification.from.userId == requestUserId))  {
@@ -25,7 +25,7 @@ const deleteRequestsNotification = (notifications: TNotification[], requestUserI
     }
     return newNotifications
 }
-const removeRequestAndNotification = async(requestingId: string, receivingId: string):Promise<TUser> =>{
+const removeRequestAndNotification = async(requestingId: ObjectId, receivingId: ObjectId):Promise<TUser> =>{
      console.log({requestingId, receivingId})
     const friend = await User.findByIdAndUpdate(requestingId, {
         $pull: {
@@ -39,7 +39,7 @@ const removeRequestAndNotification = async(requestingId: string, receivingId: st
             incomingFriendRequests: requestingId,
             notifications: {
                 type: "incoming request",
-                "from.userId": requestingId.toString()
+                "from.userId": requestingId
             }
         }
     }, { new: true });

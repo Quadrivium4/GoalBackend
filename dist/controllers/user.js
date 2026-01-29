@@ -570,7 +570,7 @@ var profileImgUpload = function(req, res) {
 };
 var profileImgUpdate = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, name, public_id, url, file, user, updatedProgressesLikes;
+        var _req_body, name, public_id, url, file, user, updatedProgressesLikes, updatedNotifications;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -600,7 +600,7 @@ var profileImgUpdate = function(req, res) {
                     return [
                         4,
                         Progress.updateMany({
-                            "likes.userId": req.user.id.toString()
+                            "likes.userId": req.user._id
                         }, {
                             $set: {
                                 "likes.$.profileImg": file
@@ -609,6 +609,26 @@ var profileImgUpdate = function(req, res) {
                     ];
                 case 2:
                     updatedProgressesLikes = _state.sent();
+                    return [
+                        4,
+                        User.updateMany({
+                            "notifications.from.userId": req.user._id
+                        }, {
+                            $set: {
+                                "notifications.$[notification].from.profileImg": file
+                            }
+                        }, {
+                            "arrayFilters": [
+                                {
+                                    "notification.from.userId": req.user._id
+                                }
+                            ],
+                            "multi": true
+                        })
+                    ];
+                case 3:
+                    updatedNotifications = _state.sent();
+                    console.log(updatedNotifications);
                     //console.log("profile image updated",{ user})
                     res.send(file);
                     return [
@@ -792,12 +812,12 @@ var getUsers = function(req, res) {
                     if (flt === "followers") {
                         followers = req.user.followers || [];
                         filter._id = {
-                            $in: arrayToOids(followers)
+                            $in: req.user.followers
                         };
                     } else if (flt === "following") {
                         following = req.user.following || [];
                         filter._id = {
-                            $in: arrayToOids(following)
+                            $in: req.user.following
                         };
                     }
                     if (search) {
@@ -809,13 +829,14 @@ var getUsers = function(req, res) {
                     projection = {
                         name: 1,
                         profileImg: 1,
+                        profileType: 1,
                         visible: {
                             "$cond": [
                                 {
                                     $or: [
                                         {
                                             $in: [
-                                                req.user.id.toString(),
+                                                req.user.id,
                                                 "$followers"
                                             ]
                                         },
@@ -840,7 +861,10 @@ var getUsers = function(req, res) {
                     users = _state.sent();
                     return [
                         2,
-                        res.send(users)
+                        res.send({
+                            users: users,
+                            user: req.user
+                        })
                     ];
             }
         });
@@ -872,7 +896,7 @@ var getNotifications = function(req, res) {
                     ];
                 case 1:
                     user = _state.sent();
-                    res.send(user.notifications);
+                    res.send(user);
                     return [
                         2
                     ];

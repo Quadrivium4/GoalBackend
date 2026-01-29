@@ -118,8 +118,10 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
+import { ObjectId } from "mongodb";
 import { addNotification } from "../functions/friends.js";
 import Progress from "../models/progress.js";
+import AppError from "../utils/appError.js";
 var updateProgressLikes = function(req, res) {
     return _async_to_generator(function() {
         var id, like, progress;
@@ -136,7 +138,12 @@ var updateProgressLikes = function(req, res) {
                     };
                     return [
                         4,
-                        Progress.findByIdAndUpdate(id, {
+                        Progress.findOneAndUpdate({
+                            _id: new ObjectId(id),
+                            "likes.userId": {
+                                $ne: req.user._id
+                            }
+                        }, {
                             $inc: {
                                 likesCount: 1
                             },
@@ -149,6 +156,8 @@ var updateProgressLikes = function(req, res) {
                     ];
                 case 1:
                     progress = _state.sent();
+                    console.log(progress);
+                    if (!progress) throw new AppError(1, 400, "you alread liked it");
                     addNotification(progress.userId, {
                         type: "like",
                         from: {

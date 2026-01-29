@@ -154,6 +154,7 @@ import { isValidObjectId } from "mongoose";
 import Day from "../models/day.js";
 import { ObjectId } from "mongodb";
 import { deleteFile } from "../utils/files.js";
+import Progress from "../models/progress.js";
 var createOrLoginUserFromGoogle = function(accessToken) {
     return _async_to_generator(function() {
         var googleUser, user, aToken;
@@ -434,7 +435,7 @@ var verifyUser = function(id, token) {
 };
 var deleteUser = function(id) {
     return _async_to_generator(function() {
-        var deletedUser, deletedDays, followersOids, followingOids, updatedFollowers, updatedFollowing;
+        var deletedUser, deletedDays, followersOids, followingOids, updatedFollowers, updatedFollowing, updateFollowingRequests, updateFollowersRequests, updateProgressesLikes, result;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -445,48 +446,77 @@ var deleteUser = function(id) {
                 case 1:
                     deletedUser = _state.sent();
                     if (!deletedUser) throw new AppError(1, 401, "No User to delete found");
-                    return [
-                        4,
-                        Day.deleteMany({
-                            userId: id
-                        })
-                    ];
-                case 2:
-                    deletedDays = _state.sent();
+                    deletedDays = Day.deleteMany({
+                        userId: deletedUser._id
+                    });
                     followersOids = deletedUser.followers.map(function(friendId) {
                         return new ObjectId(friendId);
                     });
                     followingOids = deletedUser.followers.map(function(friendId) {
                         return new ObjectId(friendId);
                     });
+                    updatedFollowers = User.updateMany({
+                        _id: {
+                            $in: followersOids
+                        }
+                    }, {
+                        $pull: {
+                            following: deletedUser._id
+                        }
+                    });
+                    updatedFollowing = User.updateMany({
+                        _id: {
+                            $in: followingOids
+                        }
+                    }, {
+                        $pull: {
+                            followers: deletedUser._id
+                        }
+                    });
+                    updateFollowingRequests = User.updateMany({
+                        _id: {
+                            $in: deletedUser.outgoingFriendRequests
+                        }
+                    }, {
+                        $pull: {
+                            incomingFriendRequests: deletedUser._id
+                        }
+                    });
+                    updateFollowersRequests = User.updateMany({
+                        _id: {
+                            $in: deletedUser.incomingFriendRequests
+                        }
+                    }, {
+                        $pull: {
+                            outgoingFriendRequests: deletedUser._id
+                        }
+                    });
+                    updateProgressesLikes = Progress.updateMany({
+                        "likes.userId": deletedUser._id
+                    }, {
+                        $pull: {
+                            likes: {
+                                userId: deletedUser._id
+                            }
+                        },
+                        $inc: {
+                            likesCount: -1
+                        }
+                    });
                     return [
                         4,
-                        User.updateMany({
-                            _id: {
-                                $in: followersOids
-                            }
-                        }, {
-                            $pull: {
-                                following: deletedUser.id
-                            }
-                        })
+                        Promise.all([
+                            deletedDays,
+                            updatedFollowers,
+                            updatedFollowing,
+                            updateFollowersRequests,
+                            updateFollowingRequests,
+                            updateProgressesLikes
+                        ])
                     ];
-                case 3:
-                    updatedFollowers = _state.sent();
-                    return [
-                        4,
-                        User.updateMany({
-                            _id: {
-                                $in: followingOids
-                            }
-                        }, {
-                            $pull: {
-                                followers: deletedUser.id
-                            }
-                        })
-                    ];
-                case 4:
-                    updatedFollowing = _state.sent();
+                case 2:
+                    result = _state.sent();
+                    console.log("deleting all info", result);
                     deleteFile(deletedUser.profileImg);
                     return [
                         2,

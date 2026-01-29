@@ -329,7 +329,7 @@ var putGoalAmount = function(req, res) {
 };
 var putGoal = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, title, amount, frequency, _id, date, newGoal, newGoals, newUser, query, day;
+        var _req_body, title, amount, frequency, _id, date, newGoal, newGoals, query, userPromise, progressUpdatePromise, result, progresses;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -347,37 +347,56 @@ var putGoal = function(req, res) {
                         return goal;
                     });
                     console.log(newGoal);
+                    if (!newGoal) throw new AppError(1, 401, "invalid id");
+                    query = newGoal.frequency == "daily" ? queryDayDate(date) : queryWeekDate(date);
+                    userPromise = User.findByIdAndUpdate(req.user.id, {
+                        goals: newGoals
+                    }, {
+                        new: true
+                    });
+                    progressUpdatePromise = Progress.updateMany({
+                        $and: [
+                            {
+                                "goalId": newGoal._id
+                            },
+                            query
+                        ]
+                    }, {
+                        goalAmount: newGoal.amount
+                    }, {
+                        new: true
+                    });
                     return [
                         4,
-                        User.findByIdAndUpdate(req.user.id, {
-                            goals: newGoals
-                        }, {
-                            new: true
-                        })
+                        Promise.all([
+                            userPromise,
+                            progressUpdatePromise
+                        ])
                     ];
                 case 1:
-                    newUser = _state.sent();
-                    if (!newGoal) throw new AppError(1, 401, "invalid id");
-                    // Change Today with new Goal
-                    query = newGoal.frequency == "daily" ? queryDayDate(date) : queryWeekDate(date);
+                    result = _state.sent();
                     return [
                         4,
-                        Progress.updateMany({
+                        Progress.find({
                             $and: [
                                 {
-                                    "goalId": newGoal._id.toString()
+                                    "goalId": newGoal._id
                                 },
                                 query
                             ]
-                        }, {
-                            goalAmount: newGoal.amount
-                        }, {
-                            new: true
+                        }).sort({
+                            date: -1
                         })
                     ];
                 case 2:
-                    day = _state.sent();
-                    res.send(newGoal);
+                    progresses = _state.sent();
+                    console.log(result, {
+                        progresses: progresses
+                    });
+                    res.send({
+                        goal: newGoal,
+                        progresses: progresses
+                    });
                     return [
                         2
                     ];
@@ -403,14 +422,14 @@ var deleteGoal = function(req, res) {
                     id = req.query.id;
                     return [
                         4,
-                        Day.deleteMany({
-                            "goal._id": new ObjectId(id)
+                        Progress.deleteMany({
+                            "goalId": new ObjectId(id)
                         })
                     ];
                 case 1:
                     _state.sent();
                     newGoals = req.user.goals.filter(function(goal) {
-                        return !eqOid(goal._id, id);
+                        return !goal._id.equals(id);
                     });
                     return [
                         4,
