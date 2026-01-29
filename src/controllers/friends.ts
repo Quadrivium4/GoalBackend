@@ -245,6 +245,7 @@ const sendFriendRequest = async(req: ProtectedReq, res) =>{
       from: {
         userId: req.user.id,
         name: req.user.name,
+        profileImg: req.user.profileImg
       },
       type: "incoming request",
       status: "unread"
