@@ -193,6 +193,7 @@ const getUser = async(req: ProtectedReq, res) =>{
     if(!id || id == req.user.id.toString()) return res.send(req.user);
     if(!isValidObjectId(id)) throw new AppError(1, 404, "invalid user uid");
     const user = await User.findById(id);
+    if(!user) throw new AppError(1, 404, "User not found");
    
     return res.send({
         _id: user.id,

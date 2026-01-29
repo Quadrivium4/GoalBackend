@@ -138,8 +138,9 @@ const deleteUser = async(id: string) =>{
     const updateFollowersRequests = User.updateMany({_id: {$in: deletedUser.incomingFriendRequests}},{ $pull: {
         outgoingFriendRequests: deletedUser._id
     }})
+    const updateUserNotifications = User.updateMany({"notifications.from.userId": deletedUser._id}, {$pull: {notifications: {from: {userId: deletedUser._id}}}});
     const updateProgressesLikes = Progress.updateMany({"likes.userId": deletedUser._id}, {$pull: { likes: {userId: deletedUser._id}}, $inc: {likesCount: -1}})
-    const result = await Promise.all([deletedDays, updatedFollowers, updatedFollowing, updateFollowersRequests, updateFollowingRequests, updateProgressesLikes]);
+    const result = await Promise.all([deletedDays, updatedFollowers, updatedFollowing, updateFollowersRequests, updateFollowingRequests, updateProgressesLikes, updateUserNotifications]);
     console.log("deleting all info", result);
     deleteFile(deletedUser.profileImg);
     return deletedUser
