@@ -692,6 +692,7 @@ var getUser = function(req, res) {
                     ];
                 case 1:
                     user = _state.sent();
+                    if (!user) throw new AppError(1, 404, "User not found");
                     return [
                         2,
                         res.send({
@@ -769,6 +770,9 @@ var editUser = function(req, res) {
             switch(_state.label){
                 case 0:
                     _req_body = req.body, name = _req_body.name, bio = _req_body.bio, profileType = _req_body.profileType;
+                    if (!name || name.length < 1) throw new AppError(1, 401, "Invalid name");
+                    if (name.length > 50) throw new AppError(1, 401, "Name too long, must be less than 50 characters");
+                    if (bio && bio.length > 300) throw new AppError(1, 401, "Bio too long, must be less than 300 characters");
                     return [
                         4,
                         User.findByIdAndUpdate(req.user.id, {
@@ -796,7 +800,7 @@ var arrayToOids = function(array) {
 };
 var getUsers = function(req, res) {
     return _async_to_generator(function() {
-        var _req_query, search, index, offset, flt, filter, followers, following, projection, users;
+        var _req_query, search, index, offset, flt, filter, followers, following, following1, following2, projection, users;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -818,6 +822,16 @@ var getUsers = function(req, res) {
                         following = req.user.following || [];
                         filter._id = {
                             $in: req.user.following
+                        };
+                    } else if (flt === "incoming-requests") {
+                        following1 = req.user.following || [];
+                        filter._id = {
+                            $in: req.user.incomingFriendRequests
+                        };
+                    } else if (flt === "outgoing-requests") {
+                        following2 = req.user.following || [];
+                        filter._id = {
+                            $in: req.user.outgoingFriendRequests
                         };
                     }
                     if (search) {
@@ -1027,6 +1041,9 @@ var addPasswordToLogin = function(req, res) {
                 case 0:
                     console.log("resetting password", req.body);
                     _req_body = req.body, email = _req_body.email, password = _req_body.password;
+                    if (!email || !password) throw new AppError(1, 401, "Invalid Credentials");
+                    if (password.length > 50) throw new AppError(1, 401, "Password too long, must be less than 50 characters");
+                    if (!validateEmail(email)) throw new AppError(1, 401, "Invalid Email");
                     return [
                         4,
                         User.findOne({

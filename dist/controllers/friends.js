@@ -164,6 +164,7 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
+import { isValidObjectId } from "mongoose";
 import { ObjectId } from "mongodb";
 import Day from "../models/day.js";
 import User from "../models/user.js";
@@ -403,6 +404,7 @@ var getFriends = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
+                    if (!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
                     if (!id) return [
                         3,
                         2
@@ -484,6 +486,7 @@ var sendFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
+                    if (!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
                     return [
                         4,
                         User.findById(id)
@@ -547,7 +550,8 @@ var sendFriendRequest = function(req, res) {
                             content: "new follower request",
                             from: {
                                 userId: req.user.id,
-                                name: req.user.name
+                                name: req.user.name,
+                                profileImg: req.user.profileImg
                             },
                             type: "incoming request",
                             status: "unread"
@@ -628,6 +632,7 @@ var acceptFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
+                    if (!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
                     if (!req.user.incomingFriendRequests.includes(new ObjectId(id))) throw new AppError(1, 400, "This person didn't send you any following request!");
                     return [
                         4,
@@ -683,6 +688,7 @@ var ignoreFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
+                    if (!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
                     console.log("ignoring friend request", {
                         id: id
                     });
@@ -710,6 +716,7 @@ var cancelFriendRequest = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.params.id;
+                    if (!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
                     console.log("canceling friend request", {
                         id: id
                     });

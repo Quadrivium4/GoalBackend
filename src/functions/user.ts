@@ -76,6 +76,7 @@ const createUnverifiedUser = async (name, email, password) => {
     if (!name || !email || !password) throw new AppError(1, 401, "Invalid Credentials");
     if (!validateEmail(email)) throw new AppError(1, 401, "Invalid Email");
     if (password.length < 6 || password.length > 50) throw new AppError(1, 401, "Password must be more than 6 characters long");
+    if(name.length > 50) throw new AppError(1, 401, "Name too long");
     // There is already a user with that email
     let alreadyExistingUser = await User.findOne({email});
     if (alreadyExistingUser && alreadyExistingUser.googleLogin) throw new AppError(1, 401, "An user with that email already registered with google");
@@ -138,7 +139,7 @@ const deleteUser = async(id: string) =>{
     const updateFollowersRequests = User.updateMany({_id: {$in: deletedUser.incomingFriendRequests}},{ $pull: {
         outgoingFriendRequests: deletedUser._id
     }})
-    const updateUserNotifications = User.updateMany({"notifications.from.userId": deletedUser._id}, {$pull: {notifications: {from: {userId: deletedUser._id}}}});
+    const updateUserNotifications = User.updateMany({"notifications.from.userId": deletedUser._id}, {$pull: {notifications: {"from.userId": deletedUser._id}}});
     const updateProgressesLikes = Progress.updateMany({"likes.userId": deletedUser._id}, {$pull: { likes: {userId: deletedUser._id}}, $inc: {likesCount: -1}})
     const result = await Promise.all([deletedDays, updatedFollowers, updatedFollowing, updateFollowersRequests, updateFollowingRequests, updateProgressesLikes, updateUserNotifications]);
     console.log("deleting all info", result);

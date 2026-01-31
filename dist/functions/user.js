@@ -318,6 +318,7 @@ var createUnverifiedUser = function(name, email, password) {
                     if (!name || !email || !password) throw new AppError(1, 401, "Invalid Credentials");
                     if (!validateEmail(email)) throw new AppError(1, 401, "Invalid Email");
                     if (password.length < 6 || password.length > 50) throw new AppError(1, 401, "Password must be more than 6 characters long");
+                    if (name.length > 50) throw new AppError(1, 401, "Name too long");
                     return [
                         4,
                         User.findOne({
@@ -435,7 +436,7 @@ var verifyUser = function(id, token) {
 };
 var deleteUser = function(id) {
     return _async_to_generator(function() {
-        var deletedUser, deletedDays, followersOids, followingOids, updatedFollowers, updatedFollowing, updateFollowingRequests, updateFollowersRequests, updateProgressesLikes, result;
+        var deletedUser, deletedDays, followersOids, followingOids, updatedFollowers, updatedFollowing, updateFollowingRequests, updateFollowersRequests, updateUserNotifications, updateProgressesLikes, result;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
@@ -491,6 +492,17 @@ var deleteUser = function(id) {
                             outgoingFriendRequests: deletedUser._id
                         }
                     });
+                    updateUserNotifications = User.updateMany({
+                        "notifications.from.userId": deletedUser._id
+                    }, {
+                        $pull: {
+                            notifications: {
+                                from: {
+                                    userId: deletedUser._id
+                                }
+                            }
+                        }
+                    });
                     updateProgressesLikes = Progress.updateMany({
                         "likes.userId": deletedUser._id
                     }, {
@@ -511,7 +523,8 @@ var deleteUser = function(id) {
                             updatedFollowing,
                             updateFollowersRequests,
                             updateFollowingRequests,
-                            updateProgressesLikes
+                            updateProgressesLikes,
+                            updateUserNotifications
                         ])
                     ];
                 case 2:

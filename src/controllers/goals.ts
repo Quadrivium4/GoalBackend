@@ -8,6 +8,8 @@ import { eqOid } from "../utils.js";
 import AppError from "../utils/appError.js";
 import { getLastMonday } from "./days.js";
 import Progress from "../models/progress.js";
+import { isValidObjectId } from "mongoose";
+import { isValidGoal, isValidGoalAmount } from "../functions/goal.js";
 
 
 const postGoal = async(req, res) =>{
@@ -55,7 +57,10 @@ const putGoalAmount = async(req: ProtectedReq, res: Response) =>{
     
 const putGoal = async(req: ProtectedReq, res: Response) =>{
     
-    const {title, amount, frequency, _id, date} = req.body;
+    const {title, amount, frequency, _id, date, type} = req.body;
+     if(!isValidObjectId(_id)) throw new AppError(1, 401, "Invalid goal id");
+     if(title.length > 50) throw new AppError(1, 401, "Goal title too long");
+     if(!isValidGoal({title, amount, frequency, _id,  type})) throw new AppError(1, 401, "Invalid goal fields");
      console.log(req.body, queryDate(date))
     let newGoal: TGoal;
     const newGoals = req.user.goals.map(goal =>{
@@ -86,7 +91,7 @@ interface IQuery {
 
 const deleteGoal = async(req: ProtectedReq<{},{},{}, IQuery>, res: Response) =>{
     const {id}= req.query;
-
+    if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid goal id");
     await Progress.deleteMany({"goalId": new ObjectId(id)});
     let newGoals = req.user.goals.filter(goal => !goal._id.equals(id));
 

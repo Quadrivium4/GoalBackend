@@ -178,6 +178,8 @@ import { eqOid } from "../utils.js";
 import AppError from "../utils/appError.js";
 import { getLastMonday } from "./days.js";
 import Progress from "../models/progress.js";
+import { isValidObjectId } from "mongoose";
+import { isValidGoal } from "../functions/goal.js";
 var postGoal = function(req, res) {
     return _async_to_generator(function() {
         var _req_body, goalForm, date, objectId, goal, user;
@@ -329,11 +331,20 @@ var putGoalAmount = function(req, res) {
 };
 var putGoal = function(req, res) {
     return _async_to_generator(function() {
-        var _req_body, title, amount, frequency, _id, date, newGoal, newGoals, query, userPromise, progressUpdatePromise, result, progresses;
+        var _req_body, title, amount, frequency, _id, date, type, newGoal, newGoals, query, userPromise, progressUpdatePromise, result, progresses;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _req_body = req.body, title = _req_body.title, amount = _req_body.amount, frequency = _req_body.frequency, _id = _req_body._id, date = _req_body.date;
+                    _req_body = req.body, title = _req_body.title, amount = _req_body.amount, frequency = _req_body.frequency, _id = _req_body._id, date = _req_body.date, type = _req_body.type;
+                    if (!isValidObjectId(_id)) throw new AppError(1, 401, "Invalid goal id");
+                    if (title.length > 50) throw new AppError(1, 401, "Goal title too long");
+                    if (!isValidGoal({
+                        title: title,
+                        amount: amount,
+                        frequency: frequency,
+                        _id: _id,
+                        type: type
+                    })) throw new AppError(1, 401, "Invalid goal fields");
                     console.log(req.body, queryDate(date));
                     newGoals = req.user.goals.map(function(goal) {
                         if (eqOid(goal._id, _id)) {
@@ -420,6 +431,7 @@ var deleteGoal = function(req, res) {
             switch(_state.label){
                 case 0:
                     id = req.query.id;
+                    if (!isValidObjectId(id)) throw new AppError(1, 401, "Invalid goal id");
                     return [
                         4,
                         Progress.deleteMany({

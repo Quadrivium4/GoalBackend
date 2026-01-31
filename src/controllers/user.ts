@@ -231,6 +231,9 @@ const changeEmail = async(req, res) =>{
 }
 const editUser = async(req, res) =>{
     const { name,  bio, profileType} = req.body;
+    if(!name || name.length < 1) throw new AppError(1, 401, "Invalid name");
+    if(name.length > 50 ) throw new AppError(1, 401, "Name too long, must be less than 50 characters");
+    if(bio && bio.length > 300) throw new AppError(1, 401, "Bio too long, must be less than 300 characters");
     const newUser = await User.findByIdAndUpdate(req.user.id, {name, bio, profileType}, {new: true})
     return res.send(newUser)
 }
@@ -252,7 +255,14 @@ const getUsers = async(req: ProtectedReq, res) =>{
     }else if(flt === "following"){
         let following = req.user.following || [];
         filter._id = {$in: req.user.following}
+    }else if(flt === "incoming-requests"){
+        let following = req.user.following || [];
+        filter._id = {$in: req.user.incomingFriendRequests}
+    }else if(flt === "outgoing-requests"){
+        let following = req.user.following || [];
+        filter._id = {$in: req.user.outgoingFriendRequests}
     }
+
 
     if(search){
         filter.name =  { $regex: "(?i)^" + search }
@@ -351,6 +361,11 @@ const deleteAccount = async(req, res) =>{
 const addPasswordToLogin = async(req, res) =>{
      console.log("resetting password", req.body);
     const {email, password} = req.body;
+
+    if(!email || !password) throw new AppError(1, 401, "Invalid Credentials");
+    if(password.length > 50) throw new AppError(1, 401, "Password too long, must be less than 50 characters")
+    if(!validateEmail(email)) throw new AppError(1, 401, "Invalid Email");
+
     const user = await User.findOne({email});
     if(!user) throw new AppError(1002,404, "User with that email not found");
     const unverifiedUser = await createResetPasswordUser(user.name, user.email, password);

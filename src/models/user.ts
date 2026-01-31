@@ -6,7 +6,7 @@ export interface TGoal  {
     title: string,
     type: "time" | "distance" | "number",
     frequency: "daily" | "weekly" | "monthly",
-    description: string,
+    description?: string,
     amount: number
 }
 

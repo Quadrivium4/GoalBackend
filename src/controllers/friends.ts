@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose, { isValidObjectId, mongo } from "mongoose";
 import { ObjectId } from "mongodb";
 import Day from "../models/day.js";
 import User, { TNotification } from "../models/user.js";
@@ -190,6 +190,7 @@ const getLazyProgress = async(req: ProtectedReq, res) =>{
 }
 const getFriends = async (req, res) => {
     const {id} = req.params;
+     if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
     if(id){
          console.log("getting friend", { id })
         //let isFriend = req.user.friends.find(friend => friend.id == id);
@@ -218,6 +219,7 @@ const getFriends = async (req, res) => {
 }
 const sendFriendRequest = async(req: ProtectedReq, res) =>{
     const {id} = req.params;
+    if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
     const friend = await User.findById(id);
     if(friend.followers.find(id => id.equals(req.user.id))) throw new AppError(1, 400, `You are already following ${friend.name} `);
     if(friend.incomingFriendRequests.find(id => id.equals(req.user.id))) throw new AppError(1, 400, `You already sent a friend request to ${friend.name}`);
@@ -291,6 +293,7 @@ const newFollowerNotification = (name: string, id: ObjectId, profileImg: TFile):
 })
 const acceptFriendRequest = async(req: ProtectedReq, res) =>{
     const { id } = req.params;
+     if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
     if(!req.user.incomingFriendRequests.includes(new ObjectId(id))) throw new AppError(1, 400, "This person didn't send you any following request!")
     const friend = await User.findByIdAndUpdate(id, {
         $push: {
@@ -325,6 +328,7 @@ const acceptFriendRequest = async(req: ProtectedReq, res) =>{
 }
 const ignoreFriendRequest = async (req: ProtectedReq, res) => {
     const { id } = req.params;
+     if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
      console.log("ignoring friend request", {id})
     //if (!req.user.incomingFriendRequests.includes(id)) throw new AppError(1, 400, `No friend request found from him`);
     const user = await removeRequestAndNotification(new ObjectId(id), req.user._id);
@@ -336,6 +340,7 @@ const ignoreFriendRequest = async (req: ProtectedReq, res) => {
 }
 const cancelFriendRequest = async (req: ProtectedReq, res) => {
     const { id } = req.params;
+     if(!isValidObjectId(id)) throw new AppError(1, 401, "Invalid friend id");
      console.log("canceling friend request", {id})
     //if (!req.user.outgoingFriendRequests.includes(id)) throw new AppError(1, 400, `You didn't send any friend request to him!`);
     const friend = await User.findById(id)
