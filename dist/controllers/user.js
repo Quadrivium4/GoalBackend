@@ -156,6 +156,8 @@ import { ObjectId } from "mongodb";
 import { v2 as cloudinary } from "cloudinary";
 import "dotenv";
 import Progress from "../models/progress.js";
+import { getApplePublicKey } from "../utils/appleLogin.js";
+import jwt from "jsonwebtoken";
 export var GOOGLE_LOGIN = "google-login";
 var client = new OAuth2Client();
 var register = function(req, res) {
@@ -409,6 +411,117 @@ var resetPassword = function(req, res) {
                     });
                     return [
                         2
+                    ];
+            }
+        });
+    })();
+};
+var appleLogin = function(req, res) {
+    return _async_to_generator(function() {
+        var idToken, decoded, publicKey, result, alreadyExistingUser, aToken, user, aToken1, user1, _ref, user2, aToken2;
+        return _ts_generator(this, function(_state) {
+            switch(_state.label){
+                case 0:
+                    console.log(req.body);
+                    idToken = req.body.idToken;
+                    decoded = jwt.decode(idToken, {
+                        complete: true
+                    });
+                    console.log(decoded);
+                    return [
+                        4,
+                        getApplePublicKey(decoded.header.kid)
+                    ];
+                case 1:
+                    publicKey = _state.sent();
+                    //console.log(publicKey.export({}));
+                    result = jwt.verify(idToken, publicKey);
+                    console.log({
+                        result: result
+                    });
+                    if (!result.email) return [
+                        2,
+                        new AppError(404, 400, "invalid token")
+                    ];
+                    return [
+                        4,
+                        User.findOne({
+                            email: result.email
+                        })
+                    ];
+                case 2:
+                    alreadyExistingUser = _state.sent();
+                    if (!(alreadyExistingUser && !alreadyExistingUser.appleLogin)) return [
+                        3,
+                        4
+                    ];
+                    //throw new AppError(1, 401, "A user with that email, not logged with google already exists");
+                    console.log("A user with that email, not logged with apple already exists");
+                    aToken = createTokens(alreadyExistingUser.id, alreadyExistingUser.email).aToken;
+                    return [
+                        4,
+                        User.findByIdAndUpdate(alreadyExistingUser.id, {
+                            googleLogin: false,
+                            appleLogin: true,
+                            tokens: _to_consumable_array(alreadyExistingUser.tokens).concat([
+                                aToken
+                            ])
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 3:
+                    user = _state.sent();
+                    return [
+                        2,
+                        res.send({
+                            user: user,
+                            aToken: aToken
+                        })
+                    ];
+                case 4:
+                    if (!(alreadyExistingUser && alreadyExistingUser.appleLogin)) return [
+                        3,
+                        6
+                    ];
+                    aToken1 = createTokens(alreadyExistingUser.id, alreadyExistingUser.email).aToken;
+                    return [
+                        4,
+                        User.findByIdAndUpdate(alreadyExistingUser.id, {
+                            tokens: _to_consumable_array(alreadyExistingUser.tokens).concat([
+                                aToken1
+                            ])
+                        }, {
+                            new: true
+                        })
+                    ];
+                case 5:
+                    user1 = _state.sent();
+                    return [
+                        2,
+                        res.send({
+                            user: user1,
+                            aToken: aToken1
+                        })
+                    ];
+                case 6:
+                    return [
+                        4,
+                        createUser("new user", result.email, "", true)
+                    ];
+                case 7:
+                    _ref = _state.sent(), user2 = _ref.user, aToken2 = _ref.aToken;
+                    console.log({
+                        user: user2,
+                        aToken: aToken2
+                    });
+                    res.send({
+                        user: user2,
+                        aToken: aToken2
+                    });
+                    return [
+                        2,
+                        res.send(result)
                     ];
             }
         });
@@ -1142,4 +1255,4 @@ var generateCloudinarySignature = function(req, res) {
         });
     })();
 };
-export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, profileImgUpdate, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile, generateCloudinarySignature };
+export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, profileImgUpdate, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile, appleLogin, generateCloudinarySignature };

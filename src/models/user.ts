@@ -90,6 +90,7 @@ export interface TUser extends mongoose.Document  {
     goals: TGoal[],
     bio: string,
     googleLogin?: boolean,
+    appleLogin?: boolean,
     outgoingFriendRequests: ObjectId[],
     incomingFriendRequests: ObjectId[],
     followers: ObjectId[],
@@ -117,6 +118,9 @@ const UserSchema = new mongoose.Schema({
         trim: true,
     },
     googleLogin: {
+        type: Boolean
+    },
+    appleLogin: {
         type: Boolean
     },
     tokens: [],

@@ -1,6 +1,6 @@
 import express, {Request, Response as ExpressResponse} from "express"
 import { tryCatch } from "./utils.js";
-import { addPasswordToLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { addPasswordToLogin, appleLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
 import {acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest, getLazyProgress } from "./controllers/friends.js"
@@ -71,6 +71,7 @@ publicRouter.post("/reset-password", tryCatch(resetPassword));
 publicRouter.post("/verify-reset-password", tryCatch(verifyResetPassword));
 publicRouter.post("/google-login", tryCatch(googleLogin))
 publicRouter.post("/delete-account", tryCatch(deleteAccount))
+publicRouter.post("/apple-login", tryCatch(appleLogin))
 
 
 protectedRouter.post("/add-password", tryCatch(addPasswordToLogin));

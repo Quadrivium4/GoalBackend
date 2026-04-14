@@ -43,6 +43,9 @@ var UserSchema = new mongoose.Schema({
     googleLogin: {
         type: Boolean
     },
+    appleLogin: {
+        type: Boolean
+    },
     tokens: [],
     goals: [],
     //friends: [],

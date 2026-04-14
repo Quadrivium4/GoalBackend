@@ -118,144 +118,106 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
+import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import AppError from "./appError.js";
+import crypto from "crypto";
 dotenv.config();
-import express from "express";
-import connectDB from "./db.js";
-import cors from "cors";
-import { protectedRouter, publicRouter } from "./routes.js";
-import Day from "./models/day.js";
-import User from "./models/user.js";
-import fileUpload from "express-fileupload";
-import errorHandler from "./middlewares/errorHandler.js";
-var app = express();
-var port = process.env.PORT;
-app.use(express.json());
-app.use(cors());
-app.use(fileUpload());
-app.use(publicRouter);
-app.use("/protected", protectedRouter);
-app.listen(port, function() {
+var appleUrl = 'https://appleid.apple.com';
+var appleKeysUrl = appleUrl + "/auth/keys";
+var getApplePublicKey = function(kid) {
     return _async_to_generator(function() {
-        var err;
+        var keys, publicKey, i, pemKey;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _state.trys.push([
-                        0,
+                    return [
+                        4,
+                        fetch(appleKeysUrl)
+                    ];
+                case 1:
+                    return [
+                        4,
+                        _state.sent().json()
+                    ];
+                case 2:
+                    keys = _state.sent().keys;
+                    console.log(keys);
+                    for(i = 0; i < keys.length; i++){
+                        if (keys[i].kid == kid) publicKey = keys[i];
+                    }
+                    if (!publicKey) throw new AppError(404, 500, "Apple key id (KID) invalid, not found in apple servers");
+                    pemKey = crypto.createPublicKey({
+                        key: publicKey,
+                        format: "jwk"
+                    });
+                    console.log({
+                        pemKey: pemKey
+                    });
+                    return [
                         2,
-                        ,
-                        3
-                    ]);
-                    return [
-                        4,
-                        connectDB(process.env.MONGO_URI)
-                    ];
-                case 1:
-                    _state.sent();
-                    // await createProgresses()
-                    //await updateUsersDb()
-                    console.log("Server listening on port ".concat(port));
-                    return [
-                        3,
-                        3
-                    ];
-                case 2:
-                    err = _state.sent();
-                    console.log("Cannot start server:", err);
-                    return [
-                        3,
-                        3
-                    ];
-                case 3:
-                    return [
-                        2
-                    ];
-            }
-        });
-    })();
-});
-// const createProgresses = async() =>{
-//     let days = await Day.find({});
-//     let promises = [];
-//     for (let i = 0; i < days.length; i++) {
-//         const day = days[i];
-//         for (let j = 0; j < day.history.length; j++) {
-//             const p = day.history[j];
-//             const newP: TProgress = {
-//                 date: p.date,
-//                 userId: day.userId,
-//                 amount: p.progress,
-//                 notes: p.notes,
-//                 likes: p.likes,
-//                 likesCount: p.likes.length,
-//                 goalId: day.goal._id,
-//                 goalAmount: day.goal.amount
-//             }
-//             promises.push(Progress.create(newP))
-//         }
-//     }
-//     let result = await Promise.all(promises);
-//     console.log("Progresses created")
-// }
-var updateDaysDb = function() {
-    return _async_to_generator(function() {
-        var days, promises;
-        return _ts_generator(this, function(_state) {
-            switch(_state.label){
-                case 0:
-                    return [
-                        4,
-                        Day.find({})
-                    ];
-                case 1:
-                    days = _state.sent();
-                    promises = [];
-                    days.forEach(function(day) {
-                    // promises.push(Day.findByIdAndUpdate(day.id, {"goal._id":  new mongoose.Types.ObjectId(day.goal.id)}))
-                    });
-                    return [
-                        4,
-                        Promise.all(promises)
-                    ];
-                case 2:
-                    _state.sent();
-                    return [
-                        2
+                        pemKey
                     ];
             }
         });
     })();
 };
-var updateUsersDb = function() {
+var generateAppleClientSecret = function() {
+    var claims = {
+        iss: process.env.APPLE_TEAM_ID,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 60 * 60,
+        aud: "https://appleid.apple.com",
+        sub: process.env.APPLE_CLIENT_ID
+    };
+    var privateKey = process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n'); // Handle newlines in the private key
+    var clientSecret = jwt.sign(claims, privateKey, {
+        algorithm: 'ES256',
+        keyid: process.env.APPLE_KEY_ID
+    });
+    return clientSecret;
+};
+var getAppleToken = function(code) {
     return _async_to_generator(function() {
-        var users, promises;
+        var clientSecret, payload, res, resJson, decoded;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
+                    clientSecret = generateAppleClientSecret();
+                    payload = {
+                        client_id: process.env.APPLE_CLIENT_ID,
+                        client_secret: clientSecret,
+                        code: code,
+                        grant_type: "authorization_code",
+                        redirect_uri: process.env.APPLE_REDIRECT_URI
+                    };
                     return [
                         4,
-                        User.find({})
+                        fetch("https://appleid.apple.com/auth/token", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(payload)
+                        })
                     ];
                 case 1:
-                    users = _state.sent();
-                    promises = [];
-                    users.forEach(function(user) {
-                        user.goals.forEach(function(goal) {
-                        //promises.push(User.findOneAndUpdate({_id: user._id, 'goals._id': goal._id}, {"goals.$._id":  new mongoose.Types.ObjectId(goal.id)}))
-                        });
-                    });
+                    res = _state.sent();
                     return [
                         4,
-                        Promise.all(promises)
+                        res.json()
                     ];
                 case 2:
-                    _state.sent();
+                    resJson = _state.sent();
+                    console.log("Apple token response", resJson);
+                    decoded = jwt.decode(resJson.id_token);
+                    console.log("Decoded Apple ID token", decoded);
                     return [
-                        2
+                        2,
+                        decoded
                     ];
             }
         });
     })();
 };
-app.use(errorHandler);
+export { getAppleToken, getApplePublicKey };

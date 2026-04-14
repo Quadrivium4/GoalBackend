@@ -30,32 +30,32 @@ app.listen(port, async()=>{
        console.log("Cannot start server:", err)
     }
 })
-const createProgresses = async() =>{
-    let days = await Day.find({});
-    let promises = [];
-    for (let i = 0; i < days.length; i++) {
-        const day = days[i];
-        for (let j = 0; j < day.history.length; j++) {
-            const p = day.history[j];
-            const newP: TProgress = {
-                date: p.date,
-                userId: day.userId,
-                amount: p.progress,
-                notes: p.notes,
-                likes: p.likes,
-                likesCount: p.likes.length,
-                goalId: day.goal._id.toString(),
-                goalAmount: day.goal.amount
+// const createProgresses = async() =>{
+//     let days = await Day.find({});
+//     let promises = [];
+//     for (let i = 0; i < days.length; i++) {
+//         const day = days[i];
+//         for (let j = 0; j < day.history.length; j++) {
+//             const p = day.history[j];
+//             const newP: TProgress = {
+//                 date: p.date,
+//                 userId: day.userId,
+//                 amount: p.progress,
+//                 notes: p.notes,
+//                 likes: p.likes,
+//                 likesCount: p.likes.length,
+//                 goalId: day.goal._id,
+//                 goalAmount: day.goal.amount
                 
-            }
-            promises.push(Progress.create(newP))
+//             }
+//             promises.push(Progress.create(newP))
             
-        }
+//         }
         
-    }
-    let result = await Promise.all(promises);
-    console.log("Progresses created")
-}
+//     }
+//     let result = await Promise.all(promises);
+//     console.log("Progresses created")
+// }
 const updateDaysDb = async() =>{
     let days = await Day.find({});
     let promises = [];

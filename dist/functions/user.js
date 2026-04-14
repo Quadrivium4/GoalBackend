@@ -497,9 +497,7 @@ var deleteUser = function(id) {
                     }, {
                         $pull: {
                             notifications: {
-                                from: {
-                                    userId: deletedUser._id
-                                }
+                                "from.userId": deletedUser._id
                             }
                         }
                     });

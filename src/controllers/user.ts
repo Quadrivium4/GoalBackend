@@ -13,6 +13,8 @@ import { BSON, BSONType, ObjectId } from "mongodb";
 import {v2 as cloudinary} from "cloudinary";
 import "dotenv"
 import Progress from "../models/progress.js";
+import { getApplePublicKey, getAppleToken } from "../utils/appleLogin.js";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export const GOOGLE_LOGIN = "google-login"
 const client = new OAuth2Client();
@@ -107,6 +109,44 @@ const resetPassword = async(req, res) =>{
     })
      console.log(result);
     res.send({user, result});
+}
+const appleLogin = async(req, res) =>{
+    console.log(req.body);
+    const {idToken} = req.body;
+    const decoded = jwt.decode(idToken, {complete: true});
+    console.log(decoded);
+    const publicKey = await getApplePublicKey(decoded.header.kid);
+    //console.log(publicKey.export({}));
+    const result = jwt.verify(idToken, publicKey) as JwtPayload;
+    console.log({result})
+    if(!result.email) return new AppError(404,400, "invalid token");
+
+    let alreadyExistingUser = await User.findOne({email: result.email});
+    if (alreadyExistingUser && !alreadyExistingUser.appleLogin) {
+        //throw new AppError(1, 401, "A user with that email, not logged with google already exists");
+         console.log( "A user with that email, not logged with apple already exists");
+         const {aToken} = createTokens(alreadyExistingUser.id, alreadyExistingUser.email);
+        let user = await User.findByIdAndUpdate(alreadyExistingUser.id,
+        {
+            googleLogin: false,
+            appleLogin: true,
+            tokens: [...alreadyExistingUser.tokens, aToken ]
+        }, { new: true });
+        return res.send({user, aToken})
+    }
+    if (alreadyExistingUser && alreadyExistingUser.appleLogin) {
+        const {aToken} = createTokens(alreadyExistingUser.id, alreadyExistingUser.email);
+        let user = await User.findByIdAndUpdate(alreadyExistingUser.id,
+        {
+            tokens: [...alreadyExistingUser.tokens, aToken]
+        }, { new: true });
+        return res.send({user, aToken})
+    }
+    
+    const { user, aToken } = await createUser("new user", result.email, "", true);
+     console.log({user, aToken})
+    res.send({ user, aToken });
+    return res.send(result);
 }
 const googleLogin = async(req, res) =>{
     //const {credential, client_id} = req.body;
@@ -446,5 +486,6 @@ export {
     getNotifications,
     readNotifications,
     getProfile,
+    appleLogin,
     generateCloudinarySignature
 }
