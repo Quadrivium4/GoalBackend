@@ -40,6 +40,9 @@ const updateProgressLikes = async(req: ProtectedReq, res: Response) =>{
             name: req.user.name,
 
         },
+        extra: {
+            progress: progress._id,
+        },
         status: "unread",
         date: Date.now(),
         content: req.user.name + " liked your activity"

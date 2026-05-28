@@ -165,6 +165,9 @@ var updateProgressLikes = function(req, res) {
                             userId: req.user.id,
                             name: req.user.name
                         },
+                        extra: {
+                            progress: progress._id
+                        },
                         status: "unread",
                         date: Date.now(),
                         content: req.user.name + " liked your activity"

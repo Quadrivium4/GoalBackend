@@ -1222,6 +1222,25 @@ var logout = function(req, res) {
         });
     })();
 };
+var registerPushNotificationToken = function(req, res) {
+    return _async_to_generator(function() {
+        var deviceToken, user;
+        return _ts_generator(this, function(_state) {
+            deviceToken = req.body.deviceToken;
+            user = User.findByIdAndUpdate(req.user.id, {
+                $push: {
+                    pushNotificationTokens: deviceToken
+                }
+            }, {
+                new: true
+            });
+            res.send(user);
+            return [
+                2
+            ];
+        });
+    })();
+};
 var generateCloudinarySignature = function(req, res) {
     return _async_to_generator(function() {
         var paramsToSign, signature;
@@ -1255,4 +1274,4 @@ var generateCloudinarySignature = function(req, res) {
         });
     })();
 };
-export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, profileImgUpdate, googleLogin, changeEmail, editUser, getNotifications, readNotifications, getProfile, appleLogin, generateCloudinarySignature };
+export { register, resetPassword, addPasswordToLogin, verifyResetPassword, deleteAccount, deleteAccountRequest, deleteUser, getUser, getUsers, login, logout, logoutUser, verify, profileImgUpload, profileImgUpdate, googleLogin, changeEmail, editUser, getNotifications, readNotifications, registerPushNotificationToken, getProfile, appleLogin, generateCloudinarySignature };

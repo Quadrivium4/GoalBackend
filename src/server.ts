@@ -11,6 +11,7 @@ import fileUpload from "express-fileupload";
 import errorHandler from "./middlewares/errorHandler.js"
 import { deleteAllDaysInDate } from "./utils.js";
 import Progress, { TProgress } from "./models/progress.js";
+import { createStravaWebhookSubscription } from "./functions/strava.js";
 
 const app = express();
 const port = process.env.PORT;
@@ -22,6 +23,7 @@ app.use("/protected", protectedRouter)
 app.listen(port, async()=>{
     try{
         await connectDB(process.env.MONGO_URI);
+        await createStravaWebhookSubscription();
        // await createProgresses()
     //await updateUsersDb()
         console.log(`Server listening on port ${port}`)

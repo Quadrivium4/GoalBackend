@@ -1,6 +1,6 @@
 import express, {Request, Response as ExpressResponse} from "express"
 import { tryCatch } from "./utils.js";
-import { addPasswordToLogin, appleLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { addPasswordToLogin, appleLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, registerPushNotificationToken, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
 import {acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest, getLazyProgress } from "./controllers/friends.js"
@@ -11,6 +11,7 @@ import AppError from "./utils/appError.js";
 import fs from "fs";
 import { ObjectId } from "mongodb";
 import { deleteProgress, getProgresses, getStats, postProgress, updateProgress } from "./controllers/progress.js";
+import { connectStrava, stravaWebhook, stravaWebhookChallenge } from "./controllers/strava.js";
 export interface ProtectedReq<
         P = ParamsDictionary,
         ResBody = any,
@@ -72,12 +73,16 @@ publicRouter.post("/verify-reset-password", tryCatch(verifyResetPassword));
 publicRouter.post("/google-login", tryCatch(googleLogin))
 publicRouter.post("/delete-account", tryCatch(deleteAccount))
 publicRouter.post("/apple-login", tryCatch(appleLogin))
+publicRouter.post("/strava-webhook", tryCatch(stravaWebhook))
+publicRouter.get("/strava-webhook", tryCatch(stravaWebhookChallenge))
 
 
 protectedRouter.post("/add-password", tryCatch(addPasswordToLogin));
 protectedRouter.use(tryCatch(verifyToken))
 protectedRouter
     .get("/profile", tryCatch(getProfile))
+
+protectedRouter.post("/connect-strava", tryCatch(connectStrava));
 protectedRouter
     .get("/user", tryCatch(getUser))
     .put("/user", tryCatch(editUser))
@@ -118,7 +123,8 @@ protectedRouter.delete("/unfollow/:id", tryCatch(unfollow))
 
 protectedRouter.route("/user/upload-profile-image")
     .post(tryCatch(profileImgUpload))
-
+protectedRouter.route("/push-notification-token")
+    .post(tryCatch(registerPushNotificationToken))
 protectedRouter.route("/user/update-img")
     .post(tryCatch(profileImgUpdate))
 protectedRouter.route("/cloudinary-signature")

@@ -19,11 +19,17 @@ export interface TNotification {
         name: string,
         userId: ObjectId,
         profileImg?: TFile,
-    }
+    },
+    extra: Object,
     status: "read" | "unread"
 }
 export type TProfileType = "public" | "private";
-
+export type TStravaTokens = {
+    accessToken: string,
+    refreshToken: string,
+    expirationDate: number,
+    athleteId: string,
+}
 const NotificationSchema = new mongoose.Schema({
     date: {
         type: Number
@@ -97,9 +103,11 @@ export interface TUser extends mongoose.Document  {
     following: ObjectId[],
     deletionToken?: string,
     changeEmailToken?: string,
+    pushNotificationTokens: string[],
     notifications: TNotification[],
     profileType: TProfileType,
-    pro: boolean
+    pro: boolean,
+    strava: TStravaTokens
 }
 const UserSchema = new mongoose.Schema({
     
@@ -153,6 +161,12 @@ const UserSchema = new mongoose.Schema({
     },
     pro: {
         type: Boolean
+    },
+    strava: {
+        refreshToken: String,
+        accessToken: String,
+        expirationDate: Number,
+        athleteId: String,
     }
 });
 

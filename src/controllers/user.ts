@@ -431,12 +431,17 @@ const logout = async(req, res) =>{
     const user = await logoutUser(req.user, req.token);
     res.send({msg: "Successfully logged out!"});
 }
+const registerPushNotificationToken = async(req: ProtectedReq, res) =>{
+    const {deviceToken} = req.body;
+    const user = User.findByIdAndUpdate(req.user.id, {$push: {pushNotificationTokens: deviceToken}},{new: true});
+    res.send(user);
+}
 const generateCloudinarySignature = async(req, res) =>{
     cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
   // Every signature is parametrized for the specific upload needed
   const paramsToSign: any= {
@@ -485,6 +490,7 @@ export {
     editUser,
     getNotifications,
     readNotifications,
+    registerPushNotificationToken,
     getProfile,
     appleLogin,
     generateCloudinarySignature

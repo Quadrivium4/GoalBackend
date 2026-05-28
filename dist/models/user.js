@@ -85,6 +85,12 @@ var UserSchema = new mongoose.Schema({
     },
     pro: {
         type: Boolean
+    },
+    strava: {
+        refreshToken: String,
+        accessToken: String,
+        expirationDate: Number,
+        athleteId: String
     }
 });
 var User = mongoose.model("User", UserSchema);

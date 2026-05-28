@@ -118,115 +118,29 @@ function _ts_generator(thisArg, body) {
         };
     }
 }
-import dotenv from "dotenv";
-dotenv.config();
-import express from "express";
-import connectDB from "./db.js";
-import cors from "cors";
-import { protectedRouter, publicRouter } from "./routes.js";
-import Day from "./models/day.js";
-import User from "./models/user.js";
-import fileUpload from "express-fileupload";
-import errorHandler from "./middlewares/errorHandler.js";
-import { createStravaWebhookSubscription } from "./functions/strava.js";
-var app = express();
-var port = process.env.PORT;
-app.use(express.json());
-app.use(cors());
-app.use(fileUpload());
-app.use(publicRouter);
-app.use("/protected", protectedRouter);
-app.listen(port, function() {
+import { exchangeCodeForTokensStrava } from "../functions/strava.js";
+import User from "../models/user.js";
+var connectStrava = function(req, res) {
     return _async_to_generator(function() {
-        var err;
+        var code, tokens, user;
         return _ts_generator(this, function(_state) {
             switch(_state.label){
                 case 0:
-                    _state.trys.push([
-                        0,
-                        3,
-                        ,
-                        4
-                    ]);
+                    code = req.body.code;
                     return [
                         4,
-                        connectDB(process.env.MONGO_URI)
+                        exchangeCodeForTokensStrava(code)
                     ];
                 case 1:
-                    _state.sent();
-                    return [
-                        4,
-                        createStravaWebhookSubscription()
-                    ];
-                case 2:
-                    _state.sent();
-                    // await createProgresses()
-                    //await updateUsersDb()
-                    console.log("Server listening on port ".concat(port));
-                    return [
-                        3,
-                        4
-                    ];
-                case 3:
-                    err = _state.sent();
-                    console.log("Cannot start server:", err);
-                    return [
-                        3,
-                        4
-                    ];
-                case 4:
-                    return [
-                        2
-                    ];
-            }
-        });
-    })();
-});
-// const createProgresses = async() =>{
-//     let days = await Day.find({});
-//     let promises = [];
-//     for (let i = 0; i < days.length; i++) {
-//         const day = days[i];
-//         for (let j = 0; j < day.history.length; j++) {
-//             const p = day.history[j];
-//             const newP: TProgress = {
-//                 date: p.date,
-//                 userId: day.userId,
-//                 amount: p.progress,
-//                 notes: p.notes,
-//                 likes: p.likes,
-//                 likesCount: p.likes.length,
-//                 goalId: day.goal._id,
-//                 goalAmount: day.goal.amount
-//             }
-//             promises.push(Progress.create(newP))
-//         }
-//     }
-//     let result = await Promise.all(promises);
-//     console.log("Progresses created")
-// }
-var updateDaysDb = function() {
-    return _async_to_generator(function() {
-        var days, promises;
-        return _ts_generator(this, function(_state) {
-            switch(_state.label){
-                case 0:
-                    return [
-                        4,
-                        Day.find({})
-                    ];
-                case 1:
-                    days = _state.sent();
-                    promises = [];
-                    days.forEach(function(day) {
-                    // promises.push(Day.findByIdAndUpdate(day.id, {"goal._id":  new mongoose.Types.ObjectId(day.goal.id)}))
+                    tokens = _state.sent();
+                    user = User.findByIdAndUpdate(req.user.id, {
+                        strava: tokens
+                    }, {
+                        new: true
                     });
-                    return [
-                        4,
-                        Promise.all(promises)
-                    ];
-                case 2:
-                    _state.sent();
+                    res.send({
+                        user: user
+                    });
                     return [
                         2
                     ];
@@ -234,35 +148,32 @@ var updateDaysDb = function() {
         });
     })();
 };
-var updateUsersDb = function() {
+var stravaWebhookChallenge = function(req, res) {
     return _async_to_generator(function() {
-        var users, promises;
         return _ts_generator(this, function(_state) {
-            switch(_state.label){
-                case 0:
-                    return [
-                        4,
-                        User.find({})
-                    ];
-                case 1:
-                    users = _state.sent();
-                    promises = [];
-                    users.forEach(function(user) {
-                        user.goals.forEach(function(goal) {
-                        //promises.push(User.findOneAndUpdate({_id: user._id, 'goals._id': goal._id}, {"goals.$._id":  new mongoose.Types.ObjectId(goal.id)}))
-                        });
-                    });
-                    return [
-                        4,
-                        Promise.all(promises)
-                    ];
-                case 2:
-                    _state.sent();
-                    return [
-                        2
-                    ];
-            }
+            console.log("strava webhook challenge", req.query);
+            if (req.query["hub.challenge"]) return [
+                2,
+                res.send({
+                    "hub.challenge": req.query["hub.challenge"]
+                })
+            ];
+            return [
+                2
+            ];
         });
     })();
 };
-app.use(errorHandler);
+var stravaWebhook = function(req, res) {
+    return _async_to_generator(function() {
+        var _req_body, owner_id, object_type, object_id;
+        return _ts_generator(this, function(_state) {
+            console.log("activity or athlete changed", req.body);
+            _req_body = req.body, owner_id = _req_body.owner_id, object_type = _req_body.object_type, object_id = _req_body.object_id;
+            return [
+                2
+            ];
+        });
+    })();
+};
+export { connectStrava, stravaWebhook, stravaWebhookChallenge };

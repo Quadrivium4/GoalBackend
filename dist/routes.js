@@ -120,13 +120,14 @@ function _ts_generator(thisArg, body) {
 }
 import express from "express";
 import { tryCatch } from "./utils.js";
-import { addPasswordToLogin, appleLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
+import { addPasswordToLogin, appleLogin, changeEmail, deleteAccount, deleteAccountRequest, editUser, generateCloudinarySignature, getNotifications, getProfile, getUser, getUsers, googleLogin, login, logout, profileImgUpdate, profileImgUpload, readNotifications, register, registerPushNotificationToken, resetPassword, verify, verifyResetPassword } from "./controllers/user.js";
 import verifyToken from "./middlewares/verifyToken.js";
 import { deleteGoal, postGoal, putGoal, putGoalAmount } from "./controllers/goals.js";
 import { acceptFriendRequest, cancelFriendRequest, deleteFollower, unfollow, getFriends, getLazyFriends, ignoreFriendRequest, sendFriendRequest, getLazyProgress } from "./controllers/friends.js";
 import { deleteProgressLikes, updateProgressLikes } from "./controllers/likes.js";
 import AppError from "./utils/appError.js";
 import { deleteProgress, getProgresses, getStats, postProgress, updateProgress } from "./controllers/progress.js";
+import { connectStrava, stravaWebhook, stravaWebhookChallenge } from "./controllers/strava.js";
 var publicRouter = express.Router();
 var protectedRouter = express.Router();
 //const filePath = import.meta.dirname + "/additionalFunctions.js";
@@ -185,9 +186,12 @@ publicRouter.post("/verify-reset-password", tryCatch(verifyResetPassword));
 publicRouter.post("/google-login", tryCatch(googleLogin));
 publicRouter.post("/delete-account", tryCatch(deleteAccount));
 publicRouter.post("/apple-login", tryCatch(appleLogin));
+publicRouter.post("/strava-webhook", tryCatch(stravaWebhook));
+publicRouter.get("/strava-webhook", tryCatch(stravaWebhookChallenge));
 protectedRouter.post("/add-password", tryCatch(addPasswordToLogin));
 protectedRouter.use(tryCatch(verifyToken));
 protectedRouter.get("/profile", tryCatch(getProfile));
+protectedRouter.post("/connect-strava", tryCatch(connectStrava));
 protectedRouter.get("/user", tryCatch(getUser)).put("/user", tryCatch(editUser)).delete("/user", tryCatch(deleteAccountRequest)).get("/users", tryCatch(getUsers)).get("/logout", tryCatch(logout)).post("/change-email", tryCatch(changeEmail));
 protectedRouter.post("/goals", tryCatch(postGoal)).put("/goals", tryCatch(putGoal)).delete("/goals", tryCatch(deleteGoal)).put("/goal-amount", tryCatch(putGoalAmount));
 protectedRouter.get("/progress", tryCatch(getProgresses)).post("/progress", tryCatch(postProgress)).put("/progress", tryCatch(updateProgress)).delete("/progress", tryCatch(deleteProgress));
@@ -206,6 +210,7 @@ protectedRouter.delete("/ignore-friend-request/:id", tryCatch(ignoreFriendReques
 protectedRouter.delete("/delete-friend/:id", tryCatch(deleteFollower));
 protectedRouter.delete("/unfollow/:id", tryCatch(unfollow));
 protectedRouter.route("/user/upload-profile-image").post(tryCatch(profileImgUpload));
+protectedRouter.route("/push-notification-token").post(tryCatch(registerPushNotificationToken));
 protectedRouter.route("/user/update-img").post(tryCatch(profileImgUpdate));
 protectedRouter.route("/cloudinary-signature").get(tryCatch(generateCloudinarySignature));
 //publicRouter.get("/file/:id", tryCatch(downloadFile))
