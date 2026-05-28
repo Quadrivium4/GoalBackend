@@ -33,7 +33,7 @@ const createStravaWebhookSubscription = async() =>{
     let alreadySubscribed = await checkStravaSubscription();
     if(alreadySubscribed) return;
     const url = new URL(stravaSubscriptionUrl);
-    const form = new FormData()
+    const form = new URLSearchParams()
     const params = {
             client_id: process.env.STRAVA_CLIENT_ID,
             client_secret: process.env.STRAVA_CLIENT_SECRET,
@@ -47,7 +47,7 @@ const createStravaWebhookSubscription = async() =>{
     let res = await fetch(url, {
         method: "POST",
         headers: {
-            "Content-Type": "multipart/form-data"
+            "Content-Type": "application/x-www-form-urlencoded"
         },
         body: form
     }).then(res =>res.json());
