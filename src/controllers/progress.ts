@@ -39,7 +39,7 @@ const getProgresses = async(req: ProtectedReq, res) =>{
     if(user.id != req.user.id && user.profileType != "public" && !user.followers.includes(req.user.id.toString())){
       throw new AppError(1, 401, "This profile is private, you cannot get information");
     }
-     console.log("getting days:", user)
+    // console.log("getting days:", user)
     // console.log({timestamp}, req.query)
     const date = new Date(timestamp);
     date.setHours(0,0,0,0);
@@ -51,7 +51,7 @@ const getProgresses = async(req: ProtectedReq, res) =>{
 
     })
     const days = await Promise.all(promises);
-    console.log("found days: ", days.length, {days, promises}, {goals: user.goals}, date, getLastMonday(date), date.getDay())
+   // console.log("found days: ", days.length, {days, promises}, {goals: user.goals}, date, getLastMonday(date), date.getDay())
 
     return res.send(days)
 }
@@ -103,7 +103,7 @@ const updateProgress = async(req: ProtectedReq, res: Response) =>{
         amount,
         date
     },{new: true});
-    console.log({updatedProgress});
+    //console.log({updatedProgress});
     res.send(updatedProgress)
 }
 const deleteProgress = async(req: ProtectedReq, res: Response) =>{

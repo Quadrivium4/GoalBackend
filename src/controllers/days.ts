@@ -98,14 +98,14 @@ const getDays = async(req: ProtectedReq, res) =>{
     if(user.id != req.user.id && user.profileType != "public" && !user.followers.includes(req.user.id.toString())){
       throw new AppError(1, 401, "This profile is private, you cannot get information");
     }
-     console.log("getting days:", user)
+    // console.log("getting days:", user)
     // console.log({timestamp}, req.query)
     const date = new Date(timestamp);
     date.setHours(0,0,0,0);
     
     //const days = await Day.find({userId: req.user.id, $or: [{date: {$gte: date.getTime()}}, {$and: [{"goal.frequency":{$eq: "weekly"} }, {date: {$gte: date.getTime() - week}}]}]});
     const days = await Day.aggregate(aggregateDays(date.getTime(), user.id));
-     console.log("found days: ", days.length, {days}, {goals: user.goals}, date, getLastMonday(date), date.getDay())
+    // console.log("found days: ", days.length, {days}, {goals: user.goals}, date, getLastMonday(date), date.getDay())
 
     if(days.length <user.goals.length){
       user.goals.map(goal =>{
@@ -183,7 +183,7 @@ const updateProgress = async(req: ProtectedReq, res: Response) =>{
       await Day.findOneAndUpdate({_id: new ObjectId(id), "history.date": date}, {$pull: {history: {date}}},{new: true});
 
       // Add progress to the new day if exists
-       console.log(queryDate(newDateObj.getTime()), oldDay.goal)
+      // console.log(queryDate(newDateObj.getTime()), oldDay.goal)
       day= await Day.findOneAndUpdate({$and: [queryDayDate(newDateObj.getTime()), {userId: req.user.id, "goal._id": new ObjectId(oldDay.goal._id)}]}, {$push: {history: historyEvent}},{new: true} )
        console.log("updated day", day)
       let goal = await getLastDayGoal(date, oldDay.goal._id)
@@ -193,7 +193,7 @@ const updateProgress = async(req: ProtectedReq, res: Response) =>{
         day = await Day.create({goal: goal, date: newDateObj.getTime(), progress: 0, userId: req.user.id, history: [historyEvent]})
       } 
     }
-     console.log(day)
+    // console.log(day)
      //let newDays = await queryGoalDays(oldDay.goal, req.user.id.toString());
     //return newDays;
     res.send(day)

@@ -4,6 +4,7 @@ import { ProtectedReq } from "../routes.js";
 
 const connectStrava = async (req: ProtectedReq, res) =>{
     const {code} = req.body;
+    console.log("connecting strava", req.body);
     const tokens = await exchangeCodeForTokensStrava(code);
     const user = User.findByIdAndUpdate(req.user.id,{
         strava: tokens

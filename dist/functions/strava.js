@@ -242,11 +242,11 @@ var createStravaWebhookSubscription = function() {
                         2
                     ];
                     url = new URL(stravaSubscriptionUrl);
-                    form = new FormData();
+                    form = new URLSearchParams();
                     params = {
                         client_id: process.env.STRAVA_CLIENT_ID,
                         client_secret: process.env.STRAVA_CLIENT_SECRET,
-                        callback_url: process.env.API_URL + "/strava-webhooks",
+                        callback_url: process.env.API_PRODUCTION_URL + "/strava-webhooks",
                         verify_token: process.env.STRAVA_VERIFY_TOKEN
                     };
                     _iteratorNormalCompletion = true, _didIteratorError = false, _iteratorError = undefined;
@@ -275,7 +275,7 @@ var createStravaWebhookSubscription = function() {
                         fetch(url, {
                             method: "POST",
                             headers: {
-                                "Content-Type": "multipart/form-data"
+                                "Content-Type": "application/x-www-form-urlencoded"
                             },
                             body: form
                         }).then(function(res) {
