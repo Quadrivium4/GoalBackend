@@ -73,8 +73,8 @@ publicRouter.post("/verify-reset-password", tryCatch(verifyResetPassword));
 publicRouter.post("/google-login", tryCatch(googleLogin))
 publicRouter.post("/delete-account", tryCatch(deleteAccount))
 publicRouter.post("/apple-login", tryCatch(appleLogin))
-publicRouter.post("/strava-webhook", tryCatch(stravaWebhook))
-publicRouter.get("/strava-webhook", tryCatch(stravaWebhookChallenge))
+publicRouter.post("/strava-webhooks", tryCatch(stravaWebhook))
+publicRouter.get("/strava-webhooks", tryCatch(stravaWebhookChallenge))
 
 
 protectedRouter.post("/add-password", tryCatch(addPasswordToLogin));

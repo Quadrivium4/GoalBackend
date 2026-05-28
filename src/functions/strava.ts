@@ -37,7 +37,7 @@ const createStravaWebhookSubscription = async() =>{
     const params = {
             client_id: process.env.STRAVA_CLIENT_ID,
             client_secret: process.env.STRAVA_CLIENT_SECRET,
-            callback_url: process.env.API_URL + "/strava-webhooks",
+            callback_url: process.env.API_PRODUCTION_URL + "/strava-webhooks",
             verify_token: process.env.STRAVA_VERIFY_TOKEN
     }
     for(const [key, value] of Object.entries(params)){
